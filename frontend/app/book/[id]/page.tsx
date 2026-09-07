@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { useToast } from "@/lib/hooks/useToast";
 import { BookingConfirmation, ListingDetail, QuoteResponse } from "@/lib/types";
 import { BookingSummaryCard } from "@/components/book/BookingSummaryCard";
 
@@ -13,6 +14,7 @@ function BookContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, openLoginModal } = useAuth();
+  const { showToast } = useToast();
   const listingId = Number(params.id);
 
   const [listing, setListing] = useState<ListingDetail | null>(null);
@@ -69,7 +71,7 @@ function BookContent() {
     setSubmitting(true);
     setError(null);
     try {
-      await api.post<BookingConfirmation>("/bookings", {
+      const res = await api.post<BookingConfirmation>("/bookings", {
         listing_id: listingId,
         check_in: checkIn,
         check_out: checkOut,
@@ -78,9 +80,12 @@ function BookContent() {
         infants: 0,
         pets: 0,
       });
+      showToast(`Reservation confirmed! Code: ${res.confirmation_code}`, "success");
       router.push("/trips");
-    } catch (err: any) {
-      setError(err?.message || "Failed to confirm reservation. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to confirm reservation";
+      setError(msg);
+      showToast(msg, "error");
     } finally {
       setSubmitting(false);
     }
@@ -231,14 +236,7 @@ function BookContent() {
 
 export default function BookPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-8 py-12 animate-pulse">
-          <div className="h-8 bg-surface-strong rounded w-1/4 mb-6" />
-          <div className="h-96 bg-surface-strong rounded-2xl" />
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="max-w-[1280px] mx-auto px-4 py-12 animate-pulse h-96 bg-surface-strong rounded-2xl" />}>
       <BookContent />
     </Suspense>
   );

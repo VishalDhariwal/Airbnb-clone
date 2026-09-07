@@ -4,11 +4,14 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { useToast } from "@/lib/hooks/useToast";
 import { TripsResponse } from "@/lib/types";
 import { TripCard } from "@/components/trips/TripCard";
+import { TripCardSkeleton } from "@/components/ui/Skeleton";
 
 export default function TripsPage() {
   const { user, loading: authLoading, openLoginModal } = useAuth();
+  const { showToast } = useToast();
   const [trips, setTrips] = useState<TripsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
@@ -34,8 +37,14 @@ export default function TripsPage() {
   }, [user]);
 
   async function handleCancelBooking(bookingId: number) {
-    await api.post(`/bookings/${bookingId}/cancel`);
-    await fetchTrips();
+    try {
+      await api.post(`/bookings/${bookingId}/cancel`);
+      showToast("Reservation cancelled", "info");
+      await fetchTrips();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to cancel reservation";
+      showToast(msg, "error");
+    }
   }
 
   if (authLoading) {
@@ -100,9 +109,9 @@ export default function TripsPage() {
 
         {/* Trip Content */}
         {loading ? (
-          <div className="space-y-4 animate-pulse">
-            <div className="h-44 bg-surface-strong rounded-2xl" />
-            <div className="h-44 bg-surface-strong rounded-2xl" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <TripCardSkeleton />
+            <TripCardSkeleton />
           </div>
         ) : currentList.length === 0 ? (
           <div className="py-16 text-center max-w-sm mx-auto space-y-4">

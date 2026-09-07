@@ -9,6 +9,7 @@ import { RoomHeader } from "@/components/room/RoomHeader";
 import { RoomAmenities } from "@/components/room/RoomAmenities";
 import { BookingWidget } from "@/components/room/BookingWidget";
 import { RoomReviews } from "@/components/room/RoomReviews";
+import { RoomDetailSkeleton } from "@/components/ui/Skeleton";
 
 export default function RoomDetailPage() {
   const params = useParams();
@@ -47,21 +48,7 @@ export default function RoomDetailPage() {
   }, [listingId]);
 
   if (loading) {
-    return (
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-12 py-8 animate-pulse space-y-6">
-        <div className="h-8 bg-surface-strong rounded w-1/3" />
-        <div className="h-[400px] bg-surface-strong rounded-2xl" />
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pt-6">
-          <div className="lg:col-span-7 space-y-4">
-            <div className="h-6 bg-surface-strong rounded w-1/2" />
-            <div className="h-20 bg-surface-strong rounded" />
-          </div>
-          <div className="lg:col-span-5">
-            <div className="h-80 bg-surface-strong rounded-2xl" />
-          </div>
-        </div>
-      </div>
-    );
+    return <RoomDetailSkeleton />;
   }
 
   if (error || !listing) {

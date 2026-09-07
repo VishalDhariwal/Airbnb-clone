@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "./useAuth";
+import { useToast } from "./useToast";
 
 interface WishlistContextType {
   savedIds: Set<number>;
@@ -15,6 +16,7 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const { user, openLoginModal } = useAuth();
+  const { showToast } = useToast();
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
 
@@ -50,14 +52,17 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
     try {
       if (wasSaved) {
         await api.delete(`/wishlist/${listingId}`);
+        showToast("Removed from wishlist", "info");
         return false;
       } else {
         await api.post(`/wishlist/${listingId}`);
+        showToast("Saved to wishlist", "success");
         return true;
       }
     } catch {
       // Revert on error
       setSavedIds(savedIds);
+      showToast("Failed to update wishlist", "error");
       return wasSaved;
     }
   }

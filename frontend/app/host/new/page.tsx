@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { useToast } from "@/lib/hooks/useToast";
 import { api } from "@/lib/api";
 import { HostListingCreateInput, HostListing } from "@/lib/types/host";
 import { WizardProgress } from "@/components/host/wizard/WizardProgress";
@@ -42,6 +43,7 @@ const INITIAL_DATA: HostListingCreateInput = {
 export default function CreateListingPage() {
   const router = useRouter();
   const { user, loading: isAuthLoading } = useAuth();
+  const { showToast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<HostListingCreateInput>(INITIAL_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -92,10 +94,12 @@ export default function CreateListingPage() {
         setIsSubmitting(true);
         setError(null);
         await api.post<HostListing>("/host/listings", formData);
+        showToast("Listing published successfully!", "success");
         router.push("/host");
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Failed to publish listing";
         setError(msg);
+        showToast(msg, "error");
       } finally {
         setIsSubmitting(false);
       }

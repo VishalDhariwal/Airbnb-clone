@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { useToast } from "@/lib/hooks/useToast";
 import { api } from "@/lib/api";
 import { HostListing, HostReservation } from "@/lib/types/host";
 import { HostMetrics } from "@/components/host/HostMetrics";
@@ -11,10 +12,12 @@ import { HostReservationsTable } from "@/components/host/HostReservationsTable";
 import { HostEditModal } from "@/components/host/HostEditModal";
 import { HostDeleteDialog } from "@/components/host/HostDeleteDialog";
 import { HostEmptyState } from "@/components/host/HostEmptyState";
+import { HostDashboardSkeleton } from "@/components/ui/Skeleton";
 import { Plus, Sparkles, Building2, Calendar, Loader2 } from "lucide-react";
 
 export default function HostDashboardPage() {
   const { user, loading: isAuthLoading } = useAuth();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<"overview" | "reservations">("overview");
   const [listings, setListings] = useState<HostListing[]>([]);
   const [reservations, setReservations] = useState<HostReservation[]>([]);
@@ -47,20 +50,35 @@ export default function HostDashboardPage() {
   }, [user, fetchData]);
 
   const handleToggleActive = async (id: number, currentStatus: boolean) => {
-    await api.patch(`/host/listings/${id}`, { is_active: !currentStatus });
-    setListings((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, is_active: !currentStatus } : l))
-    );
+    try {
+      await api.patch(`/host/listings/${id}`, { is_active: !currentStatus });
+      setListings((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, is_active: !currentStatus } : l))
+      );
+      showToast(currentStatus ? "Listing unlisted" : "Listing published", "info");
+    } catch {
+      showToast("Failed to update listing status", "error");
+    }
   };
 
   const handleSaveEdit = async (id: number, data: Partial<HostListing>) => {
-    const updated = await api.patch<HostListing>(`/host/listings/${id}`, data);
-    setListings((prev) => prev.map((l) => (l.id === id ? { ...l, ...updated } : l)));
+    try {
+      const updated = await api.patch<HostListing>(`/host/listings/${id}`, data);
+      setListings((prev) => prev.map((l) => (l.id === id ? { ...l, ...updated } : l)));
+      showToast("Listing updated successfully", "success");
+    } catch {
+      showToast("Failed to update listing", "error");
+    }
   };
 
   const handleDeleteListing = async (id: number) => {
-    await api.delete(`/host/listings/${id}`);
-    await fetchData();
+    try {
+      await api.delete(`/host/listings/${id}`);
+      showToast("Listing removed", "info");
+      await fetchData();
+    } catch {
+      showToast("Failed to delete listing", "error");
+    }
   };
 
   if (isAuthLoading) {
@@ -134,9 +152,7 @@ export default function HostDashboardPage() {
 
       {/* Main Content Body */}
       {isLoading ? (
-        <div className="py-24 flex items-center justify-center">
-          <Loader2 className="w-7 h-7 text-muted animate-spin" />
-        </div>
+        <HostDashboardSkeleton />
       ) : activeTab === "overview" ? (
         <div className="space-y-8">
           <HostMetrics listings={listings} reservations={reservations} />
