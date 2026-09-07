@@ -146,3 +146,46 @@
     letter-spacing: 0;
   }
 }
+
+/* Leaflet Custom Map Styling (DESIGN_SYSTEM.md §10) */
+.airbnb-price-pill {
+  background-color: #ffffff;
+  color: #222222;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 5px 9px;
+  border-radius: 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.airbnb-price-pill:hover,
+.airbnb-price-pill.active {
+  background-color: #222222 !important;
+  color: #ffffff !important;
+  transform: scale(1.1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  z-index: 999 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.leaflet-popup-tip {
+  display: none;
+}
