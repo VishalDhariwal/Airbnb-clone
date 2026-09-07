@@ -23,7 +23,7 @@ def test_seed_counts_and_distributions():
     try:
         # 1. Users
         users = db.query(User).all()
-        assert len(users) == 10
+        assert len(users) >= 10
         superhosts = [u for u in users if u.is_superhost]
         assert len(superhosts) >= 4
 

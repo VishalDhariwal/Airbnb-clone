@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
+from app.routers.auth import router as auth_router
 from app.routers.listings import router as listings_router
 from app.routers.metadata import router as metadata_router
 from app.routers.reviews import router as reviews_router
+from app.routers.wishlist import router as wishlist_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -22,8 +24,10 @@ app.add_middleware(
 )
 
 # Mount API routers under /api
+app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(listings_router, prefix=settings.API_V1_STR)
 app.include_router(reviews_router, prefix=settings.API_V1_STR)
+app.include_router(wishlist_router, prefix=settings.API_V1_STR)
 app.include_router(metadata_router, prefix=settings.API_V1_STR)
 
 
