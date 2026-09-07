@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --rausch: #FF385C;
+    --rausch-active: #E00B41;
+    --rausch-disabled: #FFD1DA;
+    --ink: #222222;
+    --body-text: #3F3F3F;
+    --muted: #6A6A6A;
+    --muted-soft: #929292;
+    --hairline: #DDDDDD;
+    --hairline-soft: #EBEBEB;
+    --border-strong: #C1C1C1;
+    --canvas: #FFFFFF;
+    --surface-soft: #F7F7F7;
+    --surface-strong: #F2F2F2;
+    --error: #C13515;
+    --error-hover: #B32505;
+    --on-primary: #FFFFFF;
+    --scrim: rgba(0, 0, 0, 0.5);
+  }
+
+  body {
+    color: #222222;
+    background-color: #FFFFFF;
+    font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Design System Typography Utilities (DESIGN_SYSTEM.md §3 & §10) */
+@layer utilities {
+  .t-rating-display {
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+
+  .t-display-xl {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.43;
+    letter-spacing: 0;
+  }
+
+  .t-display-lg {
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.18;
+    letter-spacing: -0.44px;
+  }
+
+  .t-display-md {
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.43;
+    letter-spacing: 0;
+  }
+
+  .t-display-sm {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.18px;
+  }
+
+  .t-title-md {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  .t-title-sm {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  .t-body-md {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 0;
+  }
+
+  .t-body-sm {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.43;
+    letter-spacing: 0;
+  }
+
+  .t-caption {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.29;
+    letter-spacing: 0;
+  }
+
+  .t-caption-sm {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.23;
+    letter-spacing: 0;
+  }
+
+  .t-badge {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.18;
+    letter-spacing: 0;
+  }
+
+  .t-micro-label {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.33;
+    letter-spacing: 0;
+  }
+
+  .t-button-md {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  .t-button-sm {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.29;
+    letter-spacing: 0;
+  }
+
+  .t-nav-link {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+}
