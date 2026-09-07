@@ -12,7 +12,12 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "supersecretdevelopmentjwtkey1234567890"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
-    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+    ]
     DATABASE_URL: str = f"sqlite:///{DEFAULT_DB_PATH}"
 
     model_config = SettingsConfigDict(

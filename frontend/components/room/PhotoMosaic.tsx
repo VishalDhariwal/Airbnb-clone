@@ -75,10 +75,12 @@ export function PhotoMosaic({ photos, title }: PhotoMosaicProps) {
           setActivePhotoIdx(0);
           setIsGalleryOpen(true);
         }}
-        className="absolute bottom-5 right-5 bg-white/95 hover:bg-white text-ink font-semibold text-xs py-2 px-3.5 rounded-lg border border-ink shadow-md flex items-center gap-2 backdrop-blur-sm hover:scale-105 active:scale-95 transition"
+        className="absolute bottom-5 right-5 bg-white hover:bg-surface-soft text-ink font-semibold text-xs py-1.5 px-3.5 rounded-lg border border-ink shadow-sm flex items-center gap-2 backdrop-blur-sm transition active:scale-95"
       >
-        <span>⊞</span>
-        <span>Show all {displayPhotos.length} photos</span>
+        <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 fill-ink" aria-hidden="true">
+          <path d="M2 2h3v3H2zm4.5 0h3v3h-3zm4.5 0h3v3h-3zM2 6.5h3v3H2zm4.5 0h3v3h-3zm4.5 0h3v3h-3zM2 11h3v3H2zm4.5 0h3v3h-3zm4.5 0h3v3h-3z" />
+        </svg>
+        <span>Show all photos</span>
       </button>
 
       {/* Full-Screen Gallery Modal */}

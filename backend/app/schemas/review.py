@@ -34,3 +34,4 @@ class ReviewListResponse(BaseModel):
     page: int
     limit: int
     sub_rating_averages: Dict[str, float]
+    rating_averages: Optional[Dict[str, float]] = None

@@ -76,5 +76,10 @@ def get_listing_reviews(
     ]
 
     return ReviewListResponse(
-        items=items, total=total, page=page, limit=limit, sub_rating_averages=averages_dict
+        items=items,
+        total=total,
+        page=page,
+        limit=limit,
+        sub_rating_averages=averages_dict,
+        rating_averages=averages_dict,
     )

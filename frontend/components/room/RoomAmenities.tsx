@@ -39,7 +39,7 @@ export function RoomAmenities({
   const displayedAmenities = amenities.slice(0, 10);
 
   return (
-    <div className="py-6 space-y-8 border-b border-hairline-soft">
+    <div id="amenities-section" className="py-6 space-y-8 border-b border-hairline-soft">
       {/* Description */}
       <div>
         <p
