@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/hooks/useAuth";
 import { ToastProvider } from "@/lib/hooks/useToast";
 import { WishlistProvider } from "@/lib/hooks/useWishlist";
+import { SearchProvider } from "@/lib/hooks/useSearch";
 import { Navbar } from "@/components/layout/Navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Footer } from "@/components/layout/Footer";
@@ -32,11 +33,13 @@ export default function RootLayout({
         <ToastProvider>
           <AuthProvider>
             <WishlistProvider>
-              <Navbar />
-              <div className="flex-1 pb-16 sm:pb-0">{children}</div>
-              <Footer />
-              <BottomNav />
-              <LoginModal />
+              <SearchProvider>
+                <Navbar />
+                <div className="flex-1 pb-16 sm:pb-0">{children}</div>
+                <Footer />
+                <BottomNav />
+                <LoginModal />
+              </SearchProvider>
             </WishlistProvider>
           </AuthProvider>
         </ToastProvider>

@@ -1,38 +1,37 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { Search } from "lucide-react";
 import { DestinationDropdown } from "./DestinationDropdown";
 import { DatePickerPopover } from "./DatePickerPopover";
 import { GuestStepper } from "./GuestStepper";
-import { SearchIcon } from "@/components/ui/Icons";
+import { useSearch } from "@/lib/hooks/useSearch";
 
-export interface SearchFilters {
-  location: string;
-  checkIn: string;
-  checkOut: string;
-  adults: number;
-  children: number;
-  infants: number;
-  pets: number;
+type ActivePanel = "where" | "when" | "who" | null;
+
+function formatWhenLabel(checkIn: string, checkOut: string) {
+  if (!checkIn && !checkOut) return "Add dates";
+  if (checkIn && checkOut) {
+    const d1 = new Date(checkIn);
+    const d2 = new Date(checkOut);
+    const m1 = d1.toLocaleDateString("en-GB", { month: "short" });
+    return `${d1.getDate()}–${d2.getDate()} ${m1}`;
+  }
+  return checkIn || "Add dates";
 }
 
-interface SearchBarProps {
-  initialFilters?: Partial<SearchFilters>;
-  onSearch: (filters: SearchFilters) => void;
-}
-
-type ActivePanel = "where" | "checkIn" | "checkOut" | "who" | null;
-
-export function SearchBar({ initialFilters, onSearch }: SearchBarProps) {
+export function SearchBar() {
+  const { filters, executeSearch } = useSearch();
   const [activePanel, setActivePanel] = useState<ActivePanel>(null);
-  const [location, setLocation] = useState(initialFilters?.location || "");
-  const [checkIn, setCheckIn] = useState(initialFilters?.checkIn || "");
-  const [checkOut, setCheckOut] = useState(initialFilters?.checkOut || "");
+
+  const [location, setLocation] = useState(filters.location);
+  const [checkIn, setCheckIn] = useState(filters.checkIn);
+  const [checkOut, setCheckOut] = useState(filters.checkOut);
   const [guests, setGuests] = useState({
-    adults: initialFilters?.adults || 1,
-    children: initialFilters?.children || 0,
-    infants: initialFilters?.infants || 0,
-    pets: initialFilters?.pets || 0,
+    adults: filters.adults || 1,
+    children: filters.children || 0,
+    infants: filters.infants || 0,
+    pets: filters.pets || 0,
   });
 
   const barRef = useRef<HTMLDivElement>(null);
@@ -50,7 +49,7 @@ export function SearchBar({ initialFilters, onSearch }: SearchBarProps) {
   function handleSearchClick(e: React.MouseEvent) {
     e.stopPropagation();
     setActivePanel(null);
-    onSearch({
+    executeSearch({
       location: location.trim(),
       checkIn,
       checkOut,
@@ -66,94 +65,84 @@ export function SearchBar({ initialFilters, onSearch }: SearchBarProps) {
       ? "1 guest"
       : "Add guests";
 
+  const whenLabel = formatWhenLabel(checkIn, checkOut);
+
   return (
-    <div ref={barRef} className="relative w-full max-w-4xl mx-auto py-2">
+    <div ref={barRef} className="relative w-full max-w-[850px] mx-auto">
+      {/* 3-Panel Main Bar: Where | When | Who */}
       <div
-        className={`flex items-center rounded-full border border-hairline transition-all duration-200 shadow-sm hover:shadow-md ${
-          activePanel ? "bg-surface-soft border-hairline-soft" : "bg-white"
+        className={`flex items-center rounded-full border border-hairline shadow-[0_3px_12px_rgba(0,0,0,0.08)] hover:shadow-md transition-all duration-300 bg-white ${
+          activePanel ? "bg-[#f7f7f7]" : ""
         }`}
       >
         {/* 1. Where Panel */}
         <div
           onClick={() => setActivePanel("where")}
-          className={`flex-1 min-w-0 py-3.5 px-6 rounded-full cursor-pointer transition ${
-            activePanel === "where" ? "bg-white shadow-lg" : "hover:bg-surface-soft"
+          className={`flex-1 min-w-0 py-3.5 px-8 rounded-full cursor-pointer transition-all duration-200 ${
+            activePanel === "where"
+              ? "bg-[#ebebeb] shadow-sm"
+              : "hover:bg-[#ebebeb]/60"
           }`}
         >
-          <label className="block text-[11px] font-bold uppercase tracking-wider text-ink">
+          <label className="block text-xs font-bold text-ink cursor-pointer">
             Where
           </label>
           <input
             type="text"
             readOnly
             value={location || "Search destinations"}
-            className={`w-full bg-transparent text-sm truncate outline-none cursor-pointer ${
+            className={`w-full bg-transparent text-sm truncate outline-none cursor-pointer mt-0.5 ${
               location ? "text-ink font-semibold" : "text-muted"
             }`}
           />
         </div>
 
-        <div className="h-8 w-px bg-hairline-soft" />
+        {/* Divider 1 */}
+        {activePanel !== "where" && activePanel !== "when" && (
+          <div className="h-8 w-px bg-hairline" />
+        )}
 
-        {/* 2. Check in Panel */}
+        {/* 2. When Panel */}
         <div
-          onClick={() => setActivePanel("checkIn")}
-          className={`flex-1 min-w-0 py-3.5 px-6 rounded-full cursor-pointer transition ${
-            activePanel === "checkIn" || activePanel === "checkOut"
-              ? "bg-white shadow-lg"
-              : "hover:bg-surface-soft"
+          onClick={() => setActivePanel("when")}
+          className={`flex-1 min-w-0 py-3.5 px-8 rounded-full cursor-pointer transition-all duration-200 ${
+            activePanel === "when"
+              ? "bg-[#ebebeb] shadow-sm"
+              : "hover:bg-[#ebebeb]/60"
           }`}
         >
-          <label className="block text-[11px] font-bold uppercase tracking-wider text-ink">
-            Check in
+          <label className="block text-xs font-bold text-ink cursor-pointer">
+            When
           </label>
           <span
-            className={`block text-sm truncate ${
+            className={`block text-sm truncate mt-0.5 ${
               checkIn ? "text-ink font-semibold" : "text-muted"
             }`}
           >
-            {checkIn || "Add dates"}
+            {whenLabel}
           </span>
         </div>
 
-        <div className="h-8 w-px bg-hairline-soft" />
+        {/* Divider 2 */}
+        {activePanel !== "when" && activePanel !== "who" && (
+          <div className="h-8 w-px bg-hairline" />
+        )}
 
-        {/* 3. Check out Panel */}
-        <div
-          onClick={() => setActivePanel("checkOut")}
-          className={`flex-1 min-w-0 py-3.5 px-6 rounded-full cursor-pointer transition ${
-            activePanel === "checkIn" || activePanel === "checkOut"
-              ? "bg-white shadow-lg"
-              : "hover:bg-surface-soft"
-          }`}
-        >
-          <label className="block text-[11px] font-bold uppercase tracking-wider text-ink">
-            Check out
-          </label>
-          <span
-            className={`block text-sm truncate ${
-              checkOut ? "text-ink font-semibold" : "text-muted"
-            }`}
-          >
-            {checkOut || "Add dates"}
-          </span>
-        </div>
-
-        <div className="h-8 w-px bg-hairline-soft" />
-
-        {/* 4. Who Panel */}
+        {/* 3. Who Panel with Search Button */}
         <div
           onClick={() => setActivePanel("who")}
-          className={`flex-[1.2] min-w-0 py-3.5 pl-6 pr-3 rounded-full cursor-pointer transition flex items-center justify-between gap-2 ${
-            activePanel === "who" ? "bg-white shadow-lg" : "hover:bg-surface-soft"
+          className={`flex-[1.1] min-w-0 py-2 pl-8 pr-2.5 rounded-full cursor-pointer transition-all duration-200 flex items-center justify-between gap-2 ${
+            activePanel === "who"
+              ? "bg-[#ebebeb] shadow-sm"
+              : "hover:bg-[#ebebeb]/60"
           }`}
         >
           <div className="min-w-0 flex-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-ink">
+            <label className="block text-xs font-bold text-ink cursor-pointer">
               Who
             </label>
             <span
-              className={`block text-sm truncate ${
+              className={`block text-sm truncate mt-0.5 ${
                 totalGuests > 0 ? "text-ink font-semibold" : "text-muted"
               }`}
             >
@@ -161,15 +150,14 @@ export function SearchBar({ initialFilters, onSearch }: SearchBarProps) {
             </span>
           </div>
 
-          {/* Search Action Button */}
+          {/* Crimson Circular Search Action Button */}
           <button
             type="button"
             onClick={handleSearchClick}
-            className="p-3.5 bg-gradient-to-r from-rausch to-rausch-active hover:opacity-95 text-white rounded-full flex items-center gap-2 transition flex-shrink-0 shadow-sm"
+            className="w-12 h-12 rounded-full bg-[#e01560] hover:bg-[#d70466] text-white flex items-center justify-center transition flex-shrink-0 shadow-sm"
             aria-label="Search"
           >
-            <SearchIcon className="w-4 h-4" />
-            <span className="hidden md:inline font-semibold text-xs pr-1">Search</span>
+            <Search className="w-4 h-4 stroke-[2.5]" />
           </button>
         </div>
       </div>
@@ -179,11 +167,11 @@ export function SearchBar({ initialFilters, onSearch }: SearchBarProps) {
         <DestinationDropdown
           value={location}
           onChange={(loc) => setLocation(loc)}
-          onClose={() => setActivePanel("checkIn")}
+          onClose={() => setActivePanel("when")}
         />
       )}
 
-      {(activePanel === "checkIn" || activePanel === "checkOut") && (
+      {activePanel === "when" && (
         <DatePickerPopover
           checkIn={checkIn}
           checkOut={checkOut}
@@ -198,7 +186,7 @@ export function SearchBar({ initialFilters, onSearch }: SearchBarProps) {
       {activePanel === "who" && (
         <GuestStepper
           guests={guests}
-          onChange={(g) => setGuests(g)}
+          onChange={(newGuests) => setGuests(newGuests)}
           onClose={() => setActivePanel(null)}
         />
       )}

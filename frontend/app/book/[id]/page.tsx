@@ -3,6 +3,7 @@
 import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { ChevronLeft } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useToast } from "@/lib/hooks/useToast";
@@ -23,15 +24,14 @@ function BookContent() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Stays parameters
-  const [checkIn, setCheckIn] = useState(
+  // Stays parameters from URL query
+  const [checkIn] = useState(
     () => searchParams.get("check_in") || new Date(Date.now() + 3 * 864e5).toISOString().split("T")[0]
   );
-  const [checkOut, setCheckOut] = useState(
-    () => searchParams.get("check_out") || new Date(Date.now() + 6 * 864e5).toISOString().split("T")[0]
+  const [checkOut] = useState(
+    () => searchParams.get("check_out") || new Date(Date.now() + 4 * 864e5).toISOString().split("T")[0]
   );
-  const [guests, setGuests] = useState(() => Number(searchParams.get("guests")) || 1);
-  const [paymentOption, setPaymentOption] = useState<"full" | "part">("full");
+  const [guests] = useState(() => Number(searchParams.get("guests")) || 2);
 
   useEffect(() => {
     if (!listingId || isNaN(listingId)) return;
@@ -117,116 +117,62 @@ function BookContent() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-12 py-10">
-        {/* Back Button & Title */}
+        {/* Back Arrow & Title */}
         <div className="flex items-center gap-4 mb-8">
           <Link
             href={`/rooms/${listingId}`}
-            className="p-2 rounded-full hover:bg-surface-soft transition text-ink"
+            className="w-10 h-10 rounded-full border border-hairline hover:bg-surface-soft transition flex items-center justify-center text-ink"
             aria-label="Back to listing"
           >
-            ‹
+            <ChevronLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold text-ink tracking-tight">
-            Request to book
+          <h1 className="text-3xl font-bold text-ink tracking-tight">
+            Confirm and pay
           </h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          {/* Left Column: Form & Trip Details */}
-          <div className="lg:col-span-7 space-y-8">
-            {/* 1. Trip Details */}
-            <div className="pb-8 border-b border-hairline-soft space-y-4">
-              <h2 className="text-xl font-bold text-ink">Your trip</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-muted mb-1">Dates</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="date"
-                      value={checkIn}
-                      onChange={(e) => setCheckIn(e.target.value)}
-                      className="w-full px-3 py-2 border border-hairline rounded-xl text-sm"
-                    />
-                    <input
-                      type="date"
-                      value={checkOut}
-                      onChange={(e) => setCheckOut(e.target.value)}
-                      className="w-full px-3 py-2 border border-hairline rounded-xl text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-muted mb-1">Guests</label>
-                  <select
-                    value={guests}
-                    onChange={(e) => setGuests(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-hairline rounded-xl text-sm"
-                  >
-                    {Array.from({ length: listing.max_guests }, (_, i) => i + 1).map((n) => (
-                      <option key={n} value={n}>
-                        {n} {n === 1 ? "guest" : "guests"}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Choose How to Pay */}
-            <div className="pb-8 border-b border-hairline-soft space-y-3">
-              <h2 className="text-xl font-bold text-ink">Choose how to pay</h2>
-              <label className="flex items-center justify-between p-4 rounded-xl border border-ink bg-surface-soft cursor-pointer">
-                <div>
-                  <p className="text-sm font-bold text-ink">Pay in full</p>
-                  <p className="text-xs text-muted">Pay the total amount now to guarantee your reservation</p>
-                </div>
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentOption === "full"}
-                  onChange={() => setPaymentOption("full")}
-                  className="accent-ink"
-                />
-              </label>
-            </div>
-
-            {/* 3. Cancellation Policy */}
-            <div className="pb-8 border-b border-hairline-soft space-y-2">
-              <h2 className="text-xl font-bold text-ink">Cancellation policy</h2>
-              <p className="text-sm text-bodytext leading-relaxed">
-                Free cancellation before check-in. Review the host&apos;s full policy for details.
+        {/* 2-Column Checkout Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+          {/* Left Column: Proceed to Payment */}
+          <div className="lg:col-span-7 space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-ink">Proceed to payment</h2>
+              <p className="text-sm text-muted mt-1">
+                You&apos;ll be directed to Razorpay to complete payment.
               </p>
             </div>
 
-            {/* 4. Ground Rules */}
-            <div className="pb-8 border-b border-hairline-soft space-y-2">
-              <h2 className="text-xl font-bold text-ink">Ground rules</h2>
-              <p className="text-sm text-bodytext leading-relaxed">
-                We ask every guest to remember a few simple rules about what makes a great guest:
-                follow the house rules, treat your host&apos;s home like your own.
-              </p>
-            </div>
+            <p className="text-xs text-bodytext pt-4 border-t border-hairline">
+              By selecting the button, I agree to the{" "}
+              <a href="#terms" className="underline font-semibold text-ink">
+                booking terms
+              </a>
+              .
+            </p>
 
-            {error && (
-              <div className="p-4 rounded-xl bg-red-50 text-danger border border-red-200 text-sm font-medium">
-                {error}
-              </div>
-            )}
+            {error && <p className="text-xs text-danger font-medium">{error}</p>}
 
-            {/* Submit Button */}
             <button
+              type="button"
               onClick={handleConfirmAndPay}
               disabled={submitting}
-              className="w-full py-4 bg-gradient-to-r from-rausch to-rausch-active text-white rounded-xl font-bold text-base hover:opacity-95 disabled:opacity-50 transition shadow-md"
+              className="w-full max-w-sm py-3.5 bg-[#e01560] hover:bg-[#d70466] text-white rounded-xl font-semibold text-base transition shadow-sm disabled:opacity-50"
             >
-              {submitting ? "Confirming reservation..." : "Confirm and pay"}
+              {submitting ? "Processing..." : "Confirm and pay"}
             </button>
           </div>
 
-          {/* Right Column: Sticky Summary */}
+          {/* Right Column: Reservation Summary Card */}
           <div className="lg:col-span-5">
-            <BookingSummaryCard listing={listing} quote={quote} />
+            <BookingSummaryCard
+              listing={listing}
+              quote={quote}
+              checkIn={checkIn}
+              checkOut={checkOut}
+              guests={guests}
+              onChangeDates={() => router.push(`/rooms/${listingId}`)}
+              onChangeGuests={() => router.push(`/rooms/${listingId}`)}
+            />
           </div>
         </div>
       </div>
@@ -236,7 +182,13 @@ function BookContent() {
 
 export default function BookPage() {
   return (
-    <Suspense fallback={<div className="max-w-[1280px] mx-auto px-4 py-12 animate-pulse h-96 bg-surface-strong rounded-2xl" />}>
+    <Suspense
+      fallback={
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-8 py-20 text-center">
+          <p className="text-muted">Loading checkout...</p>
+        </div>
+      }
+    >
       <BookContent />
     </Suspense>
   );

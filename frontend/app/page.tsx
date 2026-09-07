@@ -3,8 +3,9 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { ListingCard as ListingCardType, PaginatedResponse } from "@/lib/types";
-import { SearchBar, SearchFilters } from "@/components/search/SearchBar";
+import { useSearch } from "@/lib/hooks/useSearch";
 import { CategoryBar } from "@/components/home/CategoryBar";
+import { HomeReservationBanner } from "@/components/home/HomeReservationBanner";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { ListingCardSkeleton } from "@/components/listings/ListingCardSkeleton";
 import { FiltersModal, FilterState } from "@/components/filters/FiltersModal";
@@ -12,6 +13,8 @@ import { MapListToggle } from "@/components/map/MapListToggle";
 import { DynamicListingMap } from "@/components/map/DynamicListingMap";
 
 export default function HomePage() {
+  const { filters: searchFilters, setFilters } = useSearch();
+
   const [listings, setListings] = useState<ListingCardType[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -20,16 +23,6 @@ export default function HomePage() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [isMapMode, setIsMapMode] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
-
-  const [searchFilters, setSearchFilters] = useState<SearchFilters>({
-    location: "",
-    checkIn: "",
-    checkOut: "",
-    adults: 1,
-    children: 0,
-    infants: 0,
-    pets: 0,
-  });
 
   const [modalFilters, setModalFilters] = useState<FilterState>({
     minPrice: null,
@@ -87,7 +80,7 @@ export default function HomePage() {
 
   function handleClearAll() {
     setSelectedCategory(null);
-    setSearchFilters({
+    setFilters({
       location: "",
       checkIn: "",
       checkOut: "",
@@ -110,14 +103,10 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white relative">
-      {/* 3-Panel Search Bar Header Block */}
-      <div className="border-b border-hairline-soft bg-white pb-3 pt-2">
-        <div className="max-w-[2520px] mx-auto px-4 sm:px-8 md:px-12 lg:px-20">
-          <SearchBar initialFilters={searchFilters} onSearch={setSearchFilters} />
-        </div>
-      </div>
+      {/* Reservation reminder pill banner directly below unified navbar */}
+      <HomeReservationBanner />
 
-      {/* Horizontal Categories Bar */}
+      {/* Horizontal Categories Filter Bar */}
       <CategoryBar
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
@@ -125,7 +114,7 @@ export default function HomePage() {
       />
 
       {/* Main Content Section */}
-      <main className="flex-1 max-w-[2520px] mx-auto w-full px-4 sm:px-8 md:px-12 lg:px-20 py-8">
+      <main className="flex-1 max-w-[2520px] mx-auto w-full px-4 sm:px-8 md:px-12 lg:px-20 py-6">
         {loading && listings.length === 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-6 gap-y-10">
             {Array.from({ length: 12 }).map((_, idx) => (
@@ -147,20 +136,20 @@ export default function HomePage() {
             </button>
           </div>
         ) : isMapMode ? (
-          /* Split View: List on left, Interactive Map on right (Reference 09) */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            <div className="lg:col-span-6 xl:col-span-7 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {listings.map((lst) => (
+          /* Split View: List on left, Interactive Map on right */
+          <div className="flex gap-6 h-[calc(100vh-280px)]">
+            <div className="w-full lg:w-3/5 overflow-y-auto pr-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              {listings.map((item) => (
                 <div
-                  key={lst.id}
-                  onMouseEnter={() => setSelectedListingId(lst.id)}
+                  key={item.id}
+                  onMouseEnter={() => setSelectedListingId(item.id)}
                   onMouseLeave={() => setSelectedListingId(null)}
                 >
-                  <ListingCard listing={lst} />
+                  <ListingCard listing={item} />
                 </div>
               ))}
             </div>
-            <div className="hidden lg:block lg:col-span-6 xl:col-span-5 sticky top-40 h-[calc(100vh-180px)]">
+            <div className="hidden lg:block lg:w-2/5 h-full rounded-2xl overflow-hidden border border-hairline shadow-sm sticky top-0">
               <DynamicListingMap
                 listings={listings}
                 selectedListingId={selectedListingId}
@@ -169,44 +158,46 @@ export default function HomePage() {
             </div>
           </div>
         ) : (
-          /* Standard Responsive Grid */
-          <>
+          /* Grid View */
+          <div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-6 gap-y-10">
-              {listings.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
+              {listings.map((item) => (
+                <ListingCard key={item.id} listing={item} />
               ))}
             </div>
 
+            {/* Load More Pagination */}
             {hasMore && (
-              <div className="flex flex-col items-center justify-center pt-12 pb-6 gap-2">
-                <p className="text-sm text-muted">Showing {listings.length} properties</p>
+              <div className="mt-12 flex justify-center">
                 <button
                   onClick={() => {
-                    const next = page + 1;
-                    setPage(next);
-                    fetchListings(next, true);
+                    const nextPage = page + 1;
+                    setPage(nextPage);
+                    fetchListings(nextPage, true);
                   }}
                   disabled={loading}
-                  className="px-8 py-3.5 bg-ink text-white rounded-xl text-sm font-semibold hover:bg-neutral-800 disabled:opacity-50 transition shadow-sm"
+                  className="px-8 py-3.5 bg-ink text-white rounded-xl font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
                 >
-                  {loading ? "Loading more..." : "Show more"}
+                  {loading ? "Loading..." : "Show more"}
                 </button>
               </div>
             )}
-          </>
+          </div>
         )}
       </main>
 
-      {/* Floating Map/List Toggle */}
+      {/* Floating Map/List View Toggle */}
       <MapListToggle isMapMode={isMapMode} onToggle={() => setIsMapMode(!isMapMode)} />
 
-      {/* Filters Modal */}
+      {/* Full Filters Modal */}
       <FiltersModal
         isOpen={isFiltersOpen}
         onClose={() => setIsFiltersOpen(false)}
         filters={modalFilters}
-        onApply={setModalFilters}
-        resultCount={listings.length}
+        onApply={(newFilters) => {
+          setModalFilters(newFilters);
+          setIsFiltersOpen(false);
+        }}
       />
     </div>
   );
