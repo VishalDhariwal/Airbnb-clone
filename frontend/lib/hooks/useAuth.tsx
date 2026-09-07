@@ -10,6 +10,9 @@ interface AuthContextType {
   loading: boolean;
   isHost: boolean;
   demoUsers: DemoUser[];
+  isLoginModalOpen: boolean;
+  openLoginModal: () => void;
+  closeLoginModal: () => void;
   login: (email: string) => Promise<void>;
   logout: () => void;
 }
@@ -21,6 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     // Load stored token and fetch current user
@@ -54,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("token", res.access_token);
       setToken(res.access_token);
       setUser(res.user);
+      setIsLoginModalOpen(false);
     } finally {
       setLoading(false);
     }
@@ -73,6 +78,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         isHost: Boolean(user?.is_host),
         demoUsers,
+        isLoginModalOpen,
+        openLoginModal: () => setIsLoginModalOpen(true),
+        closeLoginModal: () => setIsLoginModalOpen(false),
         login,
         logout,
       }}

@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/lib/hooks/useAuth";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { LoginModal } from "@/components/auth/LoginModal";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,8 +25,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-white text-ink font-sans antialiased">
-        {children}
+      <body className="min-h-screen flex flex-col bg-white text-ink font-sans antialiased">
+        <AuthProvider>
+          <Navbar />
+          <div className="flex-1">{children}</div>
+          <Footer />
+          <LoginModal />
+        </AuthProvider>
       </body>
     </html>
   );
