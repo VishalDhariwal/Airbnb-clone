@@ -1,0 +1,35 @@
+[
+  {"name": "Fast wifi", "icon_key": "wifi", "category": "essentials"},
+  {"name": "Air conditioning", "icon_key": "wind", "category": "essentials"},
+  {"name": "Dedicated workspace", "icon_key": "briefcase", "category": "essentials"},
+  {"name": "Washing machine", "icon_key": "disc", "category": "essentials"},
+  {"name": "Geyser / Hot water", "icon_key": "flame", "category": "essentials"},
+  {"name": "Iron", "icon_key": "shirt", "category": "essentials"},
+  {"name": "Hair dryer", "icon_key": "wind", "category": "essentials"},
+  {"name": "Bed linens", "icon_key": "bed-double", "category": "essentials"},
+  {"name": "Hangers", "icon_key": "tag", "category": "essentials"},
+  {"name": "Extra pillows and blankets", "icon_key": "layers", "category": "essentials"},
+
+  {"name": "Kitchen", "icon_key": "utensils", "category": "kitchen"},
+  {"name": "Refrigerator", "icon_key": "refrigerator", "category": "kitchen"},
+  {"name": "Microwave", "icon_key": "microwave", "category": "kitchen"},
+  {"name": "Cooking basics (pots, pans, oil)", "icon_key": "soup", "category": "kitchen"},
+  {"name": "Dishes and silverware", "icon_key": "utensils-crossed", "category": "kitchen"},
+  {"name": "Coffee maker", "icon_key": "coffee", "category": "kitchen"},
+  {"name": "Induction stove", "icon_key": "flame", "category": "kitchen"},
+
+  {"name": "Private swimming pool", "icon_key": "waves", "category": "features"},
+  {"name": "Free parking on premises", "icon_key": "car", "category": "features"},
+  {"name": "55 inch HDTV with Netflix", "icon_key": "tv", "category": "features"},
+  {"name": "Private patio or balcony", "icon_key": "sun", "category": "features"},
+  {"name": "Lush private garden", "icon_key": "trees", "category": "features"},
+  {"name": "Outdoor dining area", "icon_key": "table", "category": "features"},
+  {"name": "BBQ grill", "icon_key": "flame", "category": "features"},
+  {"name": "Beach access", "icon_key": "umbrella", "category": "features"},
+  {"name": "Pet friendly", "icon_key": "paw-print", "category": "features"},
+
+  {"name": "Smoke alarm", "icon_key": "bell", "category": "safety"},
+  {"name": "First aid kit", "icon_key": "cross", "category": "safety"},
+  {"name": "Fire extinguisher", "icon_key": "shield-alert", "category": "safety"},
+  {"name": "CCTV on property exterior", "icon_key": "video", "category": "safety"}
+]

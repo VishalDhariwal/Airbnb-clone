@@ -1,5 +1,9 @@
+from pathlib import Path
 from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_DB_PATH = BACKEND_DIR / "app.db"
 
 
 class Settings(BaseSettings):
@@ -9,7 +13,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
-    DATABASE_URL: str = "sqlite:///./app.db"
+    DATABASE_URL: str = f"sqlite:///{DEFAULT_DB_PATH}"
 
     model_config = SettingsConfigDict(
         env_file=".env",

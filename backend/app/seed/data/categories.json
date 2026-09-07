@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Beachfront",
+    "slug": "beachfront",
+    "icon_key": "waves"
+  },
+  {
+    "name": "Cabins",
+    "slug": "cabins",
+    "icon_key": "home"
+  },
+  {
+    "name": "Amazing views",
+    "slug": "amazing-views",
+    "icon_key": "mountain"
+  },
+  {
+    "name": "Tiny homes",
+    "slug": "tiny-homes",
+    "icon_key": "tent"
+  },
+  {
+    "name": "Trending",
+    "slug": "trending",
+    "icon_key": "flame"
+  },
+  {
+    "name": "Rooms",
+    "slug": "rooms",
+    "icon_key": "bed"
+  },
+  {
+    "name": "Farms",
+    "slug": "farms",
+    "icon_key": "tractor"
+  },
+  {
+    "name": "Lakefront",
+    "slug": "lakefront",
+    "icon_key": "anchor"
+  },
+  {
+    "name": "Design",
+    "slug": "design",
+    "icon_key": "palette"
+  },
+  {
+    "name": "Mansions",
+    "slug": "mansions",
+    "icon_key": "castle"
+  }
+]

@@ -1,0 +1,102 @@
+[
+  {
+    "id": 1,
+    "name": "Priya Sharma",
+    "email": "priya.host@airbnb.test",
+    "avatar_url": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80",
+    "is_host": true,
+    "is_superhost": true,
+    "bio": "Architect and hospitality enthusiast living between Goa and Mumbai. I design spaces that bring natural light and serenity to vacations.",
+    "response_rate": 99
+  },
+  {
+    "id": 2,
+    "name": "Tarun Kapoor",
+    "email": "tarun.host@airbnb.test",
+    "avatar_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80",
+    "is_host": true,
+    "is_superhost": false,
+    "bio": "Lifelong resident of North Goa. Excited to share the best local cafes, hidden beaches, and quiet coves with fellow travelers.",
+    "response_rate": 96
+  },
+  {
+    "id": 3,
+    "name": "Rohit Verma",
+    "email": "rohit.host@airbnb.test",
+    "avatar_url": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&q=80",
+    "is_host": true,
+    "is_superhost": false,
+    "bio": "Tech consultant and property host across Delhi NCR. Obsessed with fast wifi, ergonomic workspaces, and seamless self check-in.",
+    "response_rate": 94
+  },
+  {
+    "id": 4,
+    "name": "Ananya Joshi",
+    "email": "ananya.host@airbnb.test",
+    "avatar_url": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80",
+    "is_host": true,
+    "is_superhost": true,
+    "bio": "Painter and writer hosting scenic cedarwood cabins in Old Manali. Always happy to guide guests on Himalayan treks.",
+    "response_rate": 100
+  },
+  {
+    "id": 5,
+    "name": "Vikramaditya Rathore",
+    "email": "vikram.host@airbnb.test",
+    "avatar_url": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&q=80",
+    "is_host": true,
+    "is_superhost": true,
+    "bio": "Restorer of heritage bungalows and havelis in Rajasthan. Passionate about traditional architecture and authentic cuisine.",
+    "response_rate": 98
+  },
+  {
+    "id": 6,
+    "name": "Kavita Sen",
+    "email": "kavita.host@airbnb.test",
+    "avatar_url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&q=80",
+    "is_host": true,
+    "is_superhost": true,
+    "bio": "Ecologist hosting hillside cottages in Dehradun surrounded by pine forests and bird sanctuaries.",
+    "response_rate": 99
+  },
+  {
+    "id": 7,
+    "name": "Arjun Singhal",
+    "email": "arjun.host@airbnb.test",
+    "avatar_url": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&q=80",
+    "is_host": true,
+    "is_superhost": false,
+    "bio": "Entrepreneur hosting luxury city apartments in Gurugram and South Delhi designed for business executives and families.",
+    "response_rate": 92
+  },
+  {
+    "id": 8,
+    "name": "Rahul Mehta",
+    "email": "rahul.guest@airbnb.test",
+    "avatar_url": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=300&q=80",
+    "is_host": false,
+    "is_superhost": false,
+    "bio": "Frequent traveler, avid food photographer, and remote software engineer.",
+    "response_rate": null
+  },
+  {
+    "id": 9,
+    "name": "Neha Malhotra",
+    "email": "neha.guest@airbnb.test",
+    "avatar_url": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&q=80",
+    "is_host": false,
+    "is_superhost": false,
+    "bio": "Yoga teacher and weekend road-tripper exploring coastal and mountain stays across India.",
+    "response_rate": null
+  },
+  {
+    "id": 10,
+    "name": "Amit Saxena",
+    "email": "amit.guest@airbnb.test",
+    "avatar_url": "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&q=80",
+    "is_host": false,
+    "is_superhost": false,
+    "bio": "Product designer based in Bengaluru. Traveling with family and looking for quiet, design-forward retreats.",
+    "response_rate": null
+  }
+]
