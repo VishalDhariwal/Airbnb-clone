@@ -1,0 +1,124 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { api } from "@/lib/api";
+import { ListingDetail, ReviewListResponse } from "@/lib/types";
+import { PhotoMosaic } from "@/components/room/PhotoMosaic";
+import { RoomHeader } from "@/components/room/RoomHeader";
+import { RoomAmenities } from "@/components/room/RoomAmenities";
+import { BookingWidget } from "@/components/room/BookingWidget";
+import { RoomReviews } from "@/components/room/RoomReviews";
+
+export default function RoomDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const listingId = Number(params.id);
+
+  const [listing, setListing] = useState<ListingDetail | null>(null);
+  const [reviewsData, setReviewsData] = useState<ReviewListResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!listingId || isNaN(listingId)) {
+      setError("Invalid listing ID");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    Promise.all([
+      api.get<ListingDetail>(`/listings/${listingId}`),
+      api.get<ReviewListResponse>(`/listings/${listingId}/reviews`).catch(() => null),
+    ])
+      .then(([listingRes, reviewsRes]) => {
+        setListing(listingRes);
+        setReviewsData(reviewsRes);
+      })
+      .catch((err) => {
+        setError(err?.message || "Listing not found");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [listingId]);
+
+  if (loading) {
+    return (
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-12 py-8 animate-pulse space-y-6">
+        <div className="h-8 bg-surface-strong rounded w-1/3" />
+        <div className="h-[400px] bg-surface-strong rounded-2xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pt-6">
+          <div className="lg:col-span-7 space-y-4">
+            <div className="h-6 bg-surface-strong rounded w-1/2" />
+            <div className="h-20 bg-surface-strong rounded" />
+          </div>
+          <div className="lg:col-span-5">
+            <div className="h-80 bg-surface-strong rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !listing) {
+    return (
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-8 py-20 text-center">
+        <h1 className="text-2xl font-bold text-ink mb-2">Listing not found</h1>
+        <p className="text-sm text-muted mb-6">{error || "The requested listing could not be found."}</p>
+        <button
+          onClick={() => router.push("/")}
+          className="px-6 py-3 bg-ink text-white rounded-xl text-sm font-semibold hover:opacity-90 transition"
+        >
+          Return to home
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-12 py-6">
+        {/* Title and Action Buttons */}
+        <RoomHeader listing={listing} />
+
+        {/* 5-Photo Mosaic & Gallery Modal */}
+        <PhotoMosaic photos={listing.photos} title={listing.title} />
+
+        {/* 2-Column Content Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pt-6 items-start">
+          {/* Left Column: Property Details & Reviews */}
+          <div className="lg:col-span-7 xl:col-span-8">
+            <RoomAmenities
+              description={listing.description}
+              amenities={listing.amenities}
+              amenitiesGrouped={listing.amenities_grouped}
+            />
+
+            <RoomReviews
+              reviews={reviewsData?.items || []}
+              total={reviewsData?.total ?? listing.review_count}
+              ratingAverages={reviewsData?.rating_averages}
+              host={listing.host}
+            />
+          </div>
+
+          {/* Right Column: Sticky Booking Widget */}
+          <div className="lg:col-span-5 xl:col-span-4">
+            <BookingWidget
+              listingId={listing.id}
+              nightlyRate={listing.price_per_night}
+              cleaningFee={listing.cleaning_fee}
+              maxGuests={listing.max_guests}
+              avgRating={listing.avg_rating}
+              reviewCount={listing.review_count}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

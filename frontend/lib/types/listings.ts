@@ -100,3 +100,16 @@ export interface Review {
   comment: string;
   created_at: string;
 }
+
+export interface ReviewListResponse {
+  items: Review[];
+  total: number;
+  rating_averages: {
+    cleanliness: number;
+    accuracy: number;
+    check_in: number;
+    communication: number;
+    location: number;
+    value: number;
+  };
+}
