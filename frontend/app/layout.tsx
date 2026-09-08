@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/lib/hooks/useAuth";
+import { ToastProvider } from "@/lib/hooks/useToast";
+import { WishlistProvider } from "@/lib/hooks/useWishlist";
+import { SearchProvider } from "@/lib/hooks/useSearch";
+import { Navbar } from "@/components/layout/Navbar";
+import { BottomNav } from "@/components/layout/BottomNav";
+import { Footer } from "@/components/layout/Footer";
+import { LoginModal } from "@/components/auth/LoginModal";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,8 +29,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-white text-ink font-sans antialiased">
-        {children}
+      <body className="min-h-screen flex flex-col bg-white text-ink font-sans antialiased">
+        <ToastProvider>
+          <AuthProvider>
+            <WishlistProvider>
+              <SearchProvider>
+                <Navbar />
+                <div className="flex-1 pb-16 sm:pb-0">{children}</div>
+                <Footer />
+                <BottomNav />
+                <LoginModal />
+              </SearchProvider>
+            </WishlistProvider>
+          </AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );
