@@ -154,4 +154,4 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ vars.AZURE_FRONTEND_APP_NAME || 'airbnb-clone-web-vd' }}
-          images: ${{ steps.config.outputs.registry }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+          images: ${{ steps.config.outputs.registry }}/${{ env.FRONTEND_IMAGE_NAME }}:latest 
