@@ -40,7 +40,7 @@ export function DatePickerPopover({
       animate="visible"
       exit="exit"
       style={{ originY: 0 }}
-      className="absolute left-1/2 top-full z-50 mt-3 w-[850px] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-[32px] border border-hairline-soft bg-white p-6 shadow-card"
+      className="absolute left-0 right-0 top-full z-50 mt-3 w-full rounded-[32px] border border-hairline-soft bg-white p-6 shadow-card"
     >
       {/* Dates / Months / Flexible */}
       <div className="mx-auto mb-6 flex w-fit items-center gap-1 rounded-full bg-surface-soft p-1">

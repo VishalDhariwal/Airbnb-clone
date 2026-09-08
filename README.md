@@ -2,6 +2,11 @@
 
 > An interview-grade, full-stack Airbnb clone built for high-performance property search, date-range availability calculations, atomic booking transactions, host management, and wishlist operations.
 
+### 🌐 Live Production Deployment
+- **Live Web Application:** [https://airbnb-clone-web-vd.azurewebsites.net](https://airbnb-clone-web-vd.azurewebsites.net)
+- **Live Backend API (FastAPI / Swagger Docs):** [https://airbnb-clone-api-vd.azurewebsites.net/docs](https://airbnb-clone-api-vd.azurewebsites.net/docs)
+- **API Health Check:** [https://airbnb-clone-api-vd.azurewebsites.net/api/health](https://airbnb-clone-api-vd.azurewebsites.net/api/health)
+
 ---
 
 ## 1. Overview & Tech Stack
@@ -261,26 +266,21 @@ New Stay:                           [======== Stay B ========] (Check-in: Nov 10
 
 ---
 
-## 8. Deployment Guide
+## 8. Deployment & Cloud Architecture
 
-### Deploying Backend to Render
-1. Create a **Web Service** on [Render](https://render.com) connected to your repository.
-2. Root Directory: `backend`
-3. Environment: `Python 3`
-4. Build Command: `pip install -r requirements.txt`
-5. Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-6. Environment Variables:
-   - `CORS_ORIGINS`: `["https://your-frontend.vercel.app"]`
-   - `SECRET_KEY`: `your-production-secret-key`
+### Azure Production Architecture
+- **Frontend App Service:** [https://airbnb-clone-web-vd.azurewebsites.net](https://airbnb-clone-web-vd.azurewebsites.net)
+- **Backend API App Service:** [https://airbnb-clone-api-vd.azurewebsites.net](https://airbnb-clone-api-vd.azurewebsites.net)
+- **Container Registry (ACR):** `airbnbcloneacr.azurecr.io`
+- **Database:** Azure Database for PostgreSQL Flexible Server (`airbnb_clone` with RBAC tables & automated seeds)
+- **CI/CD:** GitHub Actions workflows (`.github/workflows/ci.yml`, `release-tag.yml`, `azure-deploy.yml`) for automated testing, linting, Docker image building, and continuous deployment to Azure.
 
-> *Note:* The backend includes an automated lifespan hook that creates tables and seeds the database automatically on first startup if empty.
-
-### Deploying Frontend to Vercel
-1. Import repository to [Vercel](https://vercel.com).
-2. Root Directory: `frontend`
-3. Framework Preset: `Next.js`
-4. Environment Variables:
-   - `NEXT_PUBLIC_API_URL`: `https://your-backend.onrender.com`
+### Docker Multi-Stage Build
+Both frontend and backend are containerized with optimized multi-stage `Dockerfile` and `docker-compose.yml`:
+```bash
+# Build and run entire stack locally with Docker Compose
+docker compose up --build
+```
 
 ---
 
