@@ -108,22 +108,37 @@ jobs:
 
       # ── Summary ──────────────────────────────────────────────────────────────
       - name: Publish Action Summary
+        # A reporting-only step must never block the production deployment.
+        continue-on-error: true
+        shell: bash
+        env:
+          BACKEND_DIGEST: ${{ steps.build_backend.outputs.digest }}
+          FRONTEND_DIGEST: ${{ steps.build_frontend.outputs.digest }}
+          BACKEND_TAGS: ${{ steps.meta_backend.outputs.tags }}
+          FRONTEND_TAGS: ${{ steps.meta_frontend.outputs.tags }}
         run: |
-          echo "### 🚀 Azure Container Registry – Airbnb Clone" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Service   | Digest |" >> $GITHUB_STEP_SUMMARY
-          echo "| --------- | ------ |" >> $GITHUB_STEP_SUMMARY
-          echo "| Backend   | \`${{ steps.build_backend.outputs.digest }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Frontend  | \`${{ steps.build_frontend.outputs.digest }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "#### Backend Tags" >> $GITHUB_STEP_SUMMARY
-          for tag in ${{ steps.meta_backend.outputs.tags }}; do
-            echo "- \`$tag\`" >> $GITHUB_STEP_SUMMARY
-          done
-          echo "#### Frontend Tags" >> $GITHUB_STEP_SUMMARY
-          for tag in ${{ steps.meta_frontend.outputs.tags }}; do
-            echo "- \`$tag\`" >> $GITHUB_STEP_SUMMARY
-          done
+          {
+            echo "### 🚀 Azure Container Registry – Airbnb Clone"
+            echo
+            echo "| Service | Digest |"
+            echo "| ------- | ------ |"
+            printf '| Backend | `%s` |\n' "$BACKEND_DIGEST"
+            printf '| Frontend | `%s` |\n' "$FRONTEND_DIGEST"
+            echo
+            echo "#### Backend Tags"
+            while IFS= read -r tag; do
+              if [ -n "$tag" ]; then
+                printf -- '- `%s`\n' "$tag"
+              fi
+            done <<< "$BACKEND_TAGS"
+            echo
+            echo "#### Frontend Tags"
+            while IFS= read -r tag; do
+              if [ -n "$tag" ]; then
+                printf -- '- `%s`\n' "$tag"
+              fi
+            done <<< "$FRONTEND_TAGS"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # ── Deploy to Azure Web App ───────────────────────────────────────────────
   deploy-azure:
@@ -148,10 +163,10 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ vars.AZURE_BACKEND_APP_NAME || 'airbnb-clone-api-vd' }}
-          images: ${{ steps.config.outputs.registry }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+          images: ${{ steps.config.outputs.registry }}/${{ env.BACKEND_IMAGE_NAME }}:sha-${{ github.sha }}
 
       - name: Deploy Frontend to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ vars.AZURE_FRONTEND_APP_NAME || 'airbnb-clone-web-vd' }}
-          images: ${{ steps.config.outputs.registry }}/${{ env.FRONTEND_IMAGE_NAME }}:latest 
+          images: ${{ steps.config.outputs.registry }}/${{ env.FRONTEND_IMAGE_NAME }}:sha-${{ github.sha }}
