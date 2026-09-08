@@ -156,7 +156,7 @@ function BookContent() {
               type="button"
               onClick={handleConfirmAndPay}
               disabled={submitting}
-              className="w-full max-w-sm py-3.5 bg-[#e01560] hover:bg-[#d70466] text-white rounded-xl font-semibold text-base transition shadow-sm disabled:opacity-50"
+              className="w-full max-w-sm py-3.5 bg-rausch hover:bg-rausch-active text-white rounded-xl font-semibold text-base transition shadow-sm disabled:opacity-50"
             >
               {submitting ? "Processing..." : "Confirm and pay"}
             </button>

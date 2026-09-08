@@ -8,7 +8,7 @@ client = TestClient(app)
 
 
 def get_token_for(email: str) -> str:
-    res = client.post("/api/auth/login", json={"email": email})
+    res = client.post("/api/auth/login", json={"email": email, "password": "password123"})
     return res.json()["access_token"]
 
 

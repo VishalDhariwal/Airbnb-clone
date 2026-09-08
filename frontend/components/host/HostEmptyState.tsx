@@ -73,7 +73,7 @@ export function HostEmptyState() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
           <button
             onClick={() => login("priya.host@airbnb.test")}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-rausch hover:bg-rausch-hover text-white text-xs font-semibold shadow-sm transition"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-rausch hover:bg-rausch-active text-white text-xs font-semibold shadow-sm transition"
           >
             <span>Log in as Priya Sharma (Superhost)</span>
             <ArrowRight className="w-4 h-4" />

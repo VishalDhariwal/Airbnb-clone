@@ -11,9 +11,14 @@ interface AuthContextType {
   isHost: boolean;
   demoUsers: DemoUser[];
   isLoginModalOpen: boolean;
+  authModalMode: "login" | "signup";
   openLoginModal: () => void;
+  openSignupModal: () => void;
   closeLoginModal: () => void;
-  login: (email: string) => Promise<void>;
+  setAuthModalMode: (mode: "login" | "signup") => void;
+  login: (email: string, password?: string) => Promise<void>;
+  signup: (data: { name: string; email: string; password: string }) => Promise<void>;
+  demoLogin: (email: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -25,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState<boolean>(true);
   const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<"login" | "signup">("login");
 
   useEffect(() => {
     // Load stored token and fetch current user
@@ -51,10 +57,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch(() => setDemoUsers([]));
   }, []);
 
-  async function login(email: string) {
+  async function login(email: string, password?: string) {
     setLoading(true);
     try {
-      const res = await api.post<TokenResponse>("/auth/login", { email });
+      // If password omitted, attempt default password or demo-login
+      const payload = { email: email.trim().toLowerCase(), password: password || "password123" };
+      const res = await api.post<TokenResponse>("/auth/login", payload);
+      localStorage.setItem("token", res.access_token);
+      setToken(res.access_token);
+      setUser(res.user);
+      setIsLoginModalOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function signup(data: { name: string; email: string; password: string }) {
+    setLoading(true);
+    try {
+      const payload = {
+        name: data.name.trim(),
+        email: data.email.trim().toLowerCase(),
+        password: data.password,
+      };
+      const res = await api.post<TokenResponse>("/auth/signup", payload);
+      localStorage.setItem("token", res.access_token);
+      setToken(res.access_token);
+      setUser(res.user);
+      setIsLoginModalOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function demoLogin(email: string) {
+    setLoading(true);
+    try {
+      const res = await api.post<TokenResponse>("/auth/demo-login", { email: email.trim().toLowerCase() });
       localStorage.setItem("token", res.access_token);
       setToken(res.access_token);
       setUser(res.user);
@@ -79,9 +118,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isHost: Boolean(user?.is_host),
         demoUsers,
         isLoginModalOpen,
-        openLoginModal: () => setIsLoginModalOpen(true),
+        authModalMode,
+        openLoginModal: () => {
+          setAuthModalMode("login");
+          setIsLoginModalOpen(true);
+        },
+        openSignupModal: () => {
+          setAuthModalMode("signup");
+          setIsLoginModalOpen(true);
+        },
         closeLoginModal: () => setIsLoginModalOpen(false),
+        setAuthModalMode,
         login,
+        signup,
+        demoLogin,
         logout,
       }}
     >

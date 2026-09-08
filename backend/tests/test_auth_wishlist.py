@@ -12,8 +12,35 @@ def sample_host_route(host: User = Depends(get_current_host)):
     return {"message": f"Welcome host {host.name}"}
 
 
+import uuid
+
+
+def test_signup_creates_new_user():
+    test_email = f"traveler_{uuid.uuid4().hex[:8]}@example.com"
+    signup_payload = {
+        "name": "New Traveler",
+        "email": test_email,
+        "password": "secretpassword123",
+    }
+    res = client.post("/api/auth/signup", json=signup_payload)
+    assert res.status_code == 201
+    data = res.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
+    assert data["user"]["email"] == test_email
+    assert data["user"]["name"] == "New Traveler"
+
+    # Duplicate email signup fails
+    dup_res = client.post("/api/auth/signup", json=signup_payload)
+    assert dup_res.status_code == 400
+    assert "already exists" in dup_res.json()["detail"]
+
+
 def test_login_existing_host():
-    res = client.post("/api/auth/login", json={"email": "priya.host@airbnb.test"})
+    res = client.post(
+        "/api/auth/login",
+        json={"email": "priya.host@airbnb.test", "password": "password123"},
+    )
     assert res.status_code == 200
     data = res.json()
     assert "access_token" in data
@@ -23,13 +50,24 @@ def test_login_existing_host():
     assert data["user"]["is_superhost"] is True
 
 
-def test_login_creates_new_guest_user():
-    new_email = "newtraveler@example.com"
-    res = client.post("/api/auth/login", json={"email": new_email})
+def test_login_wrong_password():
+    res = client.post(
+        "/api/auth/login",
+        json={"email": "priya.host@airbnb.test", "password": "wrongpassword!"},
+    )
+    assert res.status_code == 401
+    assert "Invalid email or password" in res.json()["detail"]
+
+
+def test_demo_login_endpoint():
+    res = client.post(
+        "/api/auth/demo-login",
+        json={"email": "priya.host@airbnb.test"},
+    )
     assert res.status_code == 200
     data = res.json()
-    assert data["user"]["email"] == new_email
-    assert data["user"]["is_host"] is False
+    assert "access_token" in data
+    assert data["user"]["email"] == "priya.host@airbnb.test"
 
 
 def test_auth_me_protected():
@@ -42,7 +80,10 @@ def test_auth_me_protected():
     assert res.status_code == 401
 
     # 3. With valid token -> 200
-    login_res = client.post("/api/auth/login", json={"email": "rahul.guest@airbnb.test"})
+    login_res = client.post(
+        "/api/auth/login",
+        json={"email": "rahul.guest@airbnb.test", "password": "password123"},
+    )
     token = login_res.json()["access_token"]
     me_res = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert me_res.status_code == 200
@@ -51,7 +92,10 @@ def test_auth_me_protected():
 
 def test_host_guard_allows_host_and_blocks_guest():
     # Login as host -> allowed (200)
-    host_login = client.post("/api/auth/login", json={"email": "priya.host@airbnb.test"})
+    host_login = client.post(
+        "/api/auth/login",
+        json={"email": "priya.host@airbnb.test", "password": "password123"},
+    )
     host_token = host_login.json()["access_token"]
     host_res = client.get(
         "/api/test-host-guard", headers={"Authorization": f"Bearer {host_token}"}
@@ -60,7 +104,10 @@ def test_host_guard_allows_host_and_blocks_guest():
     assert "Welcome host" in host_res.json()["message"]
 
     # Login as guest -> forbidden (403)
-    guest_login = client.post("/api/auth/login", json={"email": "rahul.guest@airbnb.test"})
+    guest_login = client.post(
+        "/api/auth/login",
+        json={"email": "rahul.guest@airbnb.test", "password": "password123"},
+    )
     guest_token = guest_login.json()["access_token"]
     guest_res = client.get(
         "/api/test-host-guard", headers={"Authorization": f"Bearer {guest_token}"}
@@ -82,7 +129,10 @@ def test_get_demo_users():
 
 def test_wishlist_crud_flow():
     # Guest user login
-    login_res = client.post("/api/auth/login", json={"email": "neha.guest@airbnb.test"})
+    login_res = client.post(
+        "/api/auth/login",
+        json={"email": "neha.guest@airbnb.test", "password": "password123"},
+    )
     token = login_res.json()["access_token"]
     auth_header = {"Authorization": f"Bearer {token}"}
 

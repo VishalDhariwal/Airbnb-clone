@@ -58,7 +58,7 @@ export default function NotFound() {
         <div className="pt-4">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-rausch hover:bg-rausch-hover text-white text-xs font-semibold shadow-sm transition"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-rausch hover:bg-rausch-active text-white text-xs font-semibold shadow-sm transition"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Homepage</span>

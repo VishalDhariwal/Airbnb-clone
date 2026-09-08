@@ -9,6 +9,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Footer } from "@/components/layout/Footer";
 import { LoginModal } from "@/components/auth/LoginModal";
+import { MotionProvider } from "@/components/layout/MotionProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,19 +31,21 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="min-h-screen flex flex-col bg-white text-ink font-sans antialiased">
-        <ToastProvider>
-          <AuthProvider>
-            <WishlistProvider>
-              <SearchProvider>
-                <Navbar />
-                <div className="flex-1 pb-16 sm:pb-0">{children}</div>
-                <Footer />
-                <BottomNav />
-                <LoginModal />
-              </SearchProvider>
-            </WishlistProvider>
-          </AuthProvider>
-        </ToastProvider>
+        <MotionProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <WishlistProvider>
+                <SearchProvider>
+                  <Navbar />
+                  <div className="flex-1 pb-16 sm:pb-0">{children}</div>
+                  <Footer />
+                  <BottomNav />
+                  <LoginModal />
+                </SearchProvider>
+              </WishlistProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </MotionProvider>
       </body>
     </html>
   );

@@ -116,7 +116,7 @@ export default function HostDashboardPage() {
 
         <Link
           href="/host/new"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-rausch hover:bg-rausch-hover text-white text-xs font-semibold shadow-sm transition self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-rausch hover:bg-rausch-active text-white text-xs font-semibold shadow-sm transition self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>Create listing</span>

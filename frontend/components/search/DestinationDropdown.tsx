@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
+import { popoverVariants } from "@/lib/motion";
 import { Navigation } from "lucide-react";
 
 interface DestinationDropdownProps {
@@ -75,9 +77,15 @@ const SUGGESTIONS = [
 
 export function DestinationDropdown({ onChange, onClose }: DestinationDropdownProps) {
   return (
-    <div
+    <motion.div
+      variants={popoverVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      style={{ originY: 0 }}
+
       onClick={(e) => e.stopPropagation()}
-      className="absolute left-0 top-full mt-3 w-full sm:w-[440px] bg-white rounded-3xl shadow-[0_6px_28px_rgba(0,0,0,0.16)] border border-hairline p-6 z-50 animate-in fade-in zoom-in-95 duration-150"
+      className="absolute left-0 top-full mt-3 w-full sm:w-[440px] bg-white rounded-3xl shadow-card border border-hairline p-6 z-50"
     >
       {/* Recent Searches */}
       <div className="mb-5">
@@ -132,6 +140,6 @@ export function DestinationDropdown({ onChange, onClose }: DestinationDropdownPr
           ))}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -128,7 +128,7 @@ export function HostListingsSection({
             <div className="mt-5">
               <Link
                 href="/host/new"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rausch hover:bg-rausch-hover text-white text-sm font-semibold shadow-sm transition"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rausch hover:bg-rausch-active text-white text-sm font-semibold shadow-sm transition"
               >
                 <Plus className="w-4 h-4" />
                 <span>Create your first listing</span>

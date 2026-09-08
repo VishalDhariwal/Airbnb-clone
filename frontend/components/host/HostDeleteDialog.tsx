@@ -1,5 +1,6 @@
 "use client";
 
+import { Modal } from "@/components/ui/Modal";
 import React, { useState } from "react";
 import { HostListing } from "@/lib/types/host";
 import { AlertTriangle, Loader2 } from "lucide-react";
@@ -39,8 +40,8 @@ export function HostDeleteDialog({
   const hasBookings = (listing.total_reservations || 0) > 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-      <div className="bg-white rounded-2xl w-full max-w-md shadow-xl border border-hairline overflow-hidden p-6 space-y-4">
+    <Modal isOpen={isOpen} onClose={onClose} size="sm">
+      <div className="space-y-4 p-6">
         {/* Warning Icon */}
         <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
           <AlertTriangle className="w-6 h-6" />
@@ -85,6 +86,6 @@ export function HostDeleteDialog({
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

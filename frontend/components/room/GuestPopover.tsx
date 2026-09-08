@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { popoverVariants } from "@/lib/motion";
 import { Minus, Plus } from "lucide-react";
 
 export interface GuestCounts {
@@ -25,7 +27,6 @@ export function GuestPopover({
   onChange,
   maxGuests,
 }: GuestPopoverProps) {
-  if (!isOpen) return null;
 
   const totalGuests = counts.adults + counts.children;
   const canAddGuest = totalGuests < maxGuests;
@@ -43,9 +44,17 @@ export function GuestPopover({
   };
 
   return (
-    <div
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          variants={popoverVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          style={{ originY: 0 }}
+
       onClick={(e) => e.stopPropagation()}
-      className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-[0_6px_24px_rgba(0,0,0,0.16)] border border-hairline p-5 z-30 animate-in fade-in zoom-in-95 duration-100"
+      className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-card border border-hairline p-5 z-30"
     >
       <div className="space-y-4">
         {/* Row 1: Adults */}
@@ -194,6 +203,8 @@ export function GuestPopover({
           Close
         </button>
       </div>
-    </div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

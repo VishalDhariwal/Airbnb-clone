@@ -14,6 +14,8 @@ import { StepAmenities } from "@/components/host/wizard/StepAmenities";
 import { StepPricing } from "@/components/host/wizard/StepPricing";
 import { HostEmptyState } from "@/components/host/HostEmptyState";
 import { Loader2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { slideVariants } from "@/lib/motion";
 
 const INITIAL_DATA: HostListingCreateInput = {
   title: "",
@@ -45,6 +47,8 @@ export default function CreateListingPage() {
   const { user, loading: isAuthLoading } = useAuth();
   const { showToast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
+  // +1 forward, -1 back — tells the step transition which way to slide.
+  const [direction, setDirection] = useState(1);
   const [formData, setFormData] = useState<HostListingCreateInput>(INITIAL_DATA);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,11 +110,13 @@ export default function CreateListingPage() {
       return;
     }
 
+    setDirection(1);
     setCurrentStep((s) => Math.min(s + 1, totalSteps));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleBack = () => {
+    setDirection(-1);
     setCurrentStep((s) => Math.max(s - 1, 1));
     setError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -129,7 +135,7 @@ export default function CreateListingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-subtle flex flex-col pt-20 pb-28">
+    <div className="min-h-screen bg-surface-soft flex flex-col pt-20 pb-28">
       <WizardProgress
         currentStep={currentStep}
         totalSteps={totalSteps}
@@ -141,7 +147,7 @@ export default function CreateListingPage() {
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-6">
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-xs rounded-2xl flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between rounded-sm border border-danger/30 bg-danger/5 p-4 t-body-sm text-danger">
             <span>{error}</span>
             <button
               onClick={() => setError(null)}
@@ -152,21 +158,23 @@ export default function CreateListingPage() {
           </div>
         )}
 
-        {currentStep === 1 && (
-          <StepBasics data={formData} onChange={handleChange} />
-        )}
-        {currentStep === 2 && (
-          <StepLocation data={formData} onChange={handleChange} />
-        )}
-        {currentStep === 3 && (
-          <StepPhotos data={formData} onChange={handleChange} />
-        )}
-        {currentStep === 4 && (
-          <StepAmenities data={formData} onChange={handleChange} />
-        )}
-        {currentStep === 5 && (
-          <StepPricing data={formData} onChange={handleChange} />
-        )}
+        <AnimatePresence mode="wait" initial={false} custom={direction}>
+          <motion.div
+            key={currentStep}
+            custom={direction}
+            variants={slideVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            {currentStep === 1 && <StepBasics data={formData} onChange={handleChange} />}
+            {currentStep === 2 && <StepLocation data={formData} onChange={handleChange} />}
+            {currentStep === 3 && <StepPhotos data={formData} onChange={handleChange} />}
+            {currentStep === 4 && <StepAmenities data={formData} onChange={handleChange} />}
+            {currentStep === 5 && <StepPricing data={formData} onChange={handleChange} />}
+          </motion.div>
+        </AnimatePresence>
+
       </main>
     </div>
   );

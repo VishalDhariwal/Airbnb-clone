@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
+import { easeStandard, springMedium } from "@/lib/motion";
 
 interface ReviewsRatingHeroProps {
   avgRating: number;
@@ -29,7 +31,13 @@ export function ReviewsRatingHero({
     <div className="py-12 border-b border-hairline space-y-10">
       {/* Big Guest Favourite Laurel Hero */}
       <div className="text-center space-y-2">
-        <div className="flex items-center justify-center gap-4 sm:gap-6">
+        <motion.div
+          className="flex items-center justify-center gap-4 sm:gap-6"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.4, ease: easeStandard }}
+        >
           {/* Left Laurel Branch */}
           <svg
             className="w-10 sm:w-12 h-20 sm:h-24 text-[#222222] drop-shadow-sm"
@@ -41,9 +49,15 @@ export function ReviewsRatingHero({
           </svg>
 
           {/* Giant Score */}
-          <span className="text-7xl sm:text-8xl font-black text-ink tracking-tight font-serif select-none">
+          <motion.span
+            className="t-rating-display select-none text-ink"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={springMedium}
+          >
             {avgRating > 0 ? avgRating.toFixed(2) : "4.95"}
-          </span>
+          </motion.span>
 
           {/* Right Laurel Branch (Mirrored) */}
           <svg
@@ -54,11 +68,9 @@ export function ReviewsRatingHero({
           >
             <path d="M15.3 1.8c-.8 2.2-2.2 4.1-4 5.5.3-2.1.2-4.2-.5-6.1 1.7.1 3.3.4 4.5.6zm-5.7 7.7c-1.8 1.4-3.8 2.3-6 2.7 1.3-1.6 2.2-3.6 2.4-5.7 1.3.8 2.5 1.8 3.6 3zm-4.7 6.4c-1.9 1-3.9 1.5-6 1.6 1.7-1.2 3-2.9 3.7-4.9 1 .9 1.8 2 2.3 3.3zm-1.8 7.3c-1.6.8-3.3 1.2-5 1.2 1.6-1.1 2.7-2.7 3.3-4.5 1 .9 1.6 2 1.7 3.3zm2.5 6.5c-1 .5-2.1.8-3.2.9 1.2-.8 2-1.9 2.5-3.2.4.7.7 1.5.7 2.3z" />
           </svg>
-        </div>
+        </motion.div>
 
-        <h3 className="text-xl sm:text-2xl font-bold text-ink">
-          Guest favourite
-        </h3>
+        <h3 className="t-display-sm text-ink">Guest favourite</h3>
         <p className="text-sm text-muted max-w-sm mx-auto leading-snug">
           This home is a guest favourite based on ratings, reviews and reliability
         </p>
@@ -76,7 +88,7 @@ export function ReviewsRatingHero({
         <div className="grid grid-cols-7 min-w-[700px] divide-x divide-hairline items-stretch">
           {/* 1. Overall Rating Bars */}
           <div className="px-3 sm:px-4 flex flex-col justify-between">
-            <span className="text-xs font-semibold text-ink">Overall rating</span>
+            <span className="t-body-sm font-medium text-ink">Overall rating</span>
             <div className="space-y-1 my-2">
               {[
                 { star: 5, pct: 90 },
@@ -87,8 +99,14 @@ export function ReviewsRatingHero({
               ].map((row) => (
                 <div key={row.star} className="flex items-center gap-1.5 text-[10px] text-ink font-medium">
                   <span className="w-2">{row.star}</span>
-                  <div className="flex-1 bg-hairline rounded-full h-1 overflow-hidden">
-                    <div className="bg-ink h-1 rounded-full" style={{ width: `${row.pct}%` }} />
+                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-hairline">
+                    <motion.div
+                      className="h-1 rounded-full bg-ink"
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${row.pct}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, ease: easeStandard, delay: 0.1 }}
+                    />
                   </div>
                 </div>
               ))}
@@ -98,8 +116,8 @@ export function ReviewsRatingHero({
           {/* 2. Cleanliness */}
           <div className="px-3 sm:px-4 flex flex-col justify-between">
             <div>
-              <span className="text-xs font-semibold text-ink">Cleanliness</span>
-              <p className="text-base font-bold text-ink mt-0.5">{cleanliness.toFixed(1)}</p>
+              <span className="t-body-sm font-medium text-ink">Cleanliness</span>
+              <p className="mt-0.5 t-title-md text-ink">{cleanliness.toFixed(1)}</p>
             </div>
             {/* Spray Bottle Icon */}
             <div className="mt-4 text-ink">
@@ -112,8 +130,8 @@ export function ReviewsRatingHero({
           {/* 3. Accuracy */}
           <div className="px-3 sm:px-4 flex flex-col justify-between">
             <div>
-              <span className="text-xs font-semibold text-ink">Accuracy</span>
-              <p className="text-base font-bold text-ink mt-0.5">{accuracy.toFixed(1)}</p>
+              <span className="t-body-sm font-medium text-ink">Accuracy</span>
+              <p className="mt-0.5 t-title-md text-ink">{accuracy.toFixed(1)}</p>
             </div>
             {/* Checkmark Circle Icon */}
             <div className="mt-4 text-ink">
@@ -127,8 +145,8 @@ export function ReviewsRatingHero({
           {/* 4. Check-in */}
           <div className="px-3 sm:px-4 flex flex-col justify-between">
             <div>
-              <span className="text-xs font-semibold text-ink">Check-in</span>
-              <p className="text-base font-bold text-ink mt-0.5">{checkIn.toFixed(1)}</p>
+              <span className="t-body-sm font-medium text-ink">Check-in</span>
+              <p className="mt-0.5 t-title-md text-ink">{checkIn.toFixed(1)}</p>
             </div>
             {/* Key Icon */}
             <div className="mt-4 text-ink">
@@ -142,8 +160,8 @@ export function ReviewsRatingHero({
           {/* 5. Communication */}
           <div className="px-3 sm:px-4 flex flex-col justify-between">
             <div>
-              <span className="text-xs font-semibold text-ink">Communication</span>
-              <p className="text-base font-bold text-ink mt-0.5">{communication.toFixed(1)}</p>
+              <span className="t-body-sm font-medium text-ink">Communication</span>
+              <p className="mt-0.5 t-title-md text-ink">{communication.toFixed(1)}</p>
             </div>
             {/* Speech Bubble Icon */}
             <div className="mt-4 text-ink">
@@ -156,8 +174,8 @@ export function ReviewsRatingHero({
           {/* 6. Location */}
           <div className="px-3 sm:px-4 flex flex-col justify-between">
             <div>
-              <span className="text-xs font-semibold text-ink">Location</span>
-              <p className="text-base font-bold text-ink mt-0.5">{location.toFixed(1)}</p>
+              <span className="t-body-sm font-medium text-ink">Location</span>
+              <p className="mt-0.5 t-title-md text-ink">{location.toFixed(1)}</p>
             </div>
             {/* Folded Map Icon */}
             <div className="mt-4 text-ink">
@@ -172,8 +190,8 @@ export function ReviewsRatingHero({
           {/* 7. Value */}
           <div className="px-3 sm:px-4 flex flex-col justify-between">
             <div>
-              <span className="text-xs font-semibold text-ink">Value</span>
-              <p className="text-base font-bold text-ink mt-0.5">{value.toFixed(1)}</p>
+              <span className="t-body-sm font-medium text-ink">Value</span>
+              <p className="mt-0.5 t-title-md text-ink">{value.toFixed(1)}</p>
             </div>
             {/* Price Tag Icon */}
             <div className="mt-4 text-ink">

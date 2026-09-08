@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
+import { popoverVariants } from "@/lib/motion";
 
 interface GuestCounts {
   adults: number;
@@ -30,7 +32,13 @@ export function GuestStepper({ guests, onChange, onClose }: GuestStepperProps) {
   ];
 
   return (
-    <div className="absolute right-0 top-full mt-3 w-full sm:w-[380px] bg-white rounded-3xl shadow-[0_6px_28px_rgba(0,0,0,0.16)] border border-hairline-soft p-6 z-50 animate-in fade-in zoom-in-95 duration-150">
+    <motion.div
+      variants={popoverVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      style={{ originY: 0 }}
+ className="absolute right-0 top-full mt-3 w-full sm:w-[380px] bg-white rounded-3xl shadow-card border border-hairline-soft p-6 z-50">
       <div className="space-y-5">
         {rows.map((row) => (
           <div key={row.key} className="flex items-center justify-between">
@@ -71,6 +79,6 @@ export function GuestStepper({ guests, onChange, onClose }: GuestStepperProps) {
           Done
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }

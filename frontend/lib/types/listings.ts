@@ -48,6 +48,12 @@ export interface ListingCard {
   photos: ListingPhoto[];
 }
 
+export interface HomeSection {
+  id: string;
+  title: string;
+  items: ListingCard[];
+}
+
 export interface ListingDetail extends ListingCard {
   description: string;
   cleaning_fee: number;

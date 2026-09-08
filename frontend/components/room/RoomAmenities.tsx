@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Modal } from "@/components/ui/Modal";
+import { springFast, tapScaleSubtle } from "@/lib/motion";
 import { Amenity } from "@/lib/types";
-import { CloseIcon } from "@/components/ui/Icons";
 
 const AMENITY_ICONS: Record<string, string> = {
   wifi: "📶",
@@ -64,7 +66,7 @@ export function RoomAmenities({
 
       {/* Amenities Section */}
       <div>
-        <h3 className="text-xl font-bold text-ink mb-6">What this place offers</h3>
+        <h3 className="mb-6 t-display-md text-ink">What this place offers</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {displayedAmenities.map((amenity) => {
             const icon = AMENITY_ICONS[amenity.icon_key] || "✓";
@@ -78,67 +80,52 @@ export function RoomAmenities({
         </div>
 
         {amenities.length > 10 && (
-          <button
+          <motion.button
             onClick={() => setIsAmenitiesModalOpen(true)}
-            className="mt-6 px-6 py-3 border border-ink rounded-xl text-sm font-semibold text-ink hover:bg-surface-soft transition"
+            whileTap={tapScaleSubtle}
+            transition={springFast}
+            className="mt-6 rounded-sm border border-ink px-6 py-3 t-button-md font-semibold text-ink transition-colors duration-150 hover:bg-surface-soft"
           >
             Show all {amenities.length} amenities
-          </button>
+          </motion.button>
         )}
       </div>
 
-      {/* All Amenities Modal */}
-      {isAmenitiesModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[2px] animate-in fade-in duration-150">
-          <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-hairline flex flex-col max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-150">
-            {/* Modal Header */}
-            <div className="relative flex items-center justify-center px-6 py-4 border-b border-hairline-soft">
-              <button
-                onClick={() => setIsAmenitiesModalOpen(false)}
-                className="absolute left-6 p-1.5 rounded-full hover:bg-surface-soft transition text-ink"
-                aria-label="Close"
-              >
-                <CloseIcon className="w-4 h-4" />
-              </button>
-              <h2 className="text-base font-bold text-ink">What this place offers</h2>
-            </div>
-
-            {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {Object.keys(amenitiesGrouped).length > 0 ? (
-                Object.entries(amenitiesGrouped).map(([categoryName, items]) => (
-                  <div key={categoryName} className="space-y-3">
-                    <h4 className="font-bold text-base text-ink capitalize border-b border-hairline-soft pb-2">
-                      {categoryName}
-                    </h4>
-                    <div className="space-y-3">
-                      {items.map((item) => (
-                        <div key={item.id} className="flex items-center gap-4 text-sm text-ink">
-                          <span className="text-xl w-6 text-center">
-                            {AMENITY_ICONS[item.icon_key] || "✓"}
-                          </span>
-                          <span>{item.name}</span>
-                        </div>
-                      ))}
-                    </div>
+      <Modal
+        isOpen={isAmenitiesModalOpen}
+        onClose={() => setIsAmenitiesModalOpen(false)}
+        title="What this place offers"
+        size="md"
+      >
+        <div className="space-y-6 p-6">
+          {Object.keys(amenitiesGrouped).length > 0
+            ? Object.entries(amenitiesGrouped).map(([categoryName, items]) => (
+                <div key={categoryName} className="space-y-3">
+                  <h4 className="border-b border-hairline-soft pb-2 t-title-md capitalize text-ink">
+                    {categoryName}
+                  </h4>
+                  <div className="space-y-3">
+                    {items.map((item) => (
+                      <div key={item.id} className="flex items-center gap-4 t-body-md text-ink">
+                        <span className="w-6 text-center text-xl">
+                          {AMENITY_ICONS[item.icon_key] || "\u2713"}
+                        </span>
+                        <span>{item.name}</span>
+                      </div>
+                    ))}
                   </div>
-                ))
-              ) : (
-                <div className="space-y-3">
-                  {amenities.map((item) => (
-                    <div key={item.id} className="flex items-center gap-4 text-sm text-ink">
-                      <span className="text-xl w-6 text-center">
-                        {AMENITY_ICONS[item.icon_key] || "✓"}
-                      </span>
-                      <span>{item.name}</span>
-                    </div>
-                  ))}
                 </div>
-              )}
-            </div>
-          </div>
+              ))
+            : amenities.map((item) => (
+                <div key={item.id} className="flex items-center gap-4 t-body-md text-ink">
+                  <span className="w-6 text-center text-xl">
+                    {AMENITY_ICONS[item.icon_key] || "\u2713"}
+                  </span>
+                  <span>{item.name}</span>
+                </div>
+              ))}
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

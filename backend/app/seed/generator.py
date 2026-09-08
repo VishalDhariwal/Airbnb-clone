@@ -14,13 +14,20 @@ from app.models import (
     User,
     WishlistItem,
 )
+from app.core.security import get_password_hash
 
 
 def seed_reference_data(db: Session, categories_data: list, amenities_data: list, users_data: list):
     """Seeds base categories, amenities, and users."""
     categories = [Category(**c) for c in categories_data]
     amenities = [Amenity(**a) for a in amenities_data]
-    users = [User(**u) for u in users_data]
+    default_hash = get_password_hash("password123")
+    users = []
+    for u in users_data:
+        data = dict(u)
+        if not data.get("hashed_password"):
+            data["hashed_password"] = default_hash
+        users.append(User(**data))
 
     db.add_all(categories + amenities + users)
     db.commit()
