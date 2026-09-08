@@ -39,8 +39,8 @@ export function DatePickerPopover({
       initial="hidden"
       animate="visible"
       exit="exit"
-      style={{ originX: 0.5, originY: 0 }}
-      className="absolute inset-x-0 top-full z-50 mt-3 mx-auto w-full max-w-[850px] rounded-[32px] border border-hairline-soft bg-white p-6 shadow-card"
+      style={{ originY: 0 }}
+      className="absolute left-0 right-0 top-full z-50 mt-3 w-full rounded-[32px] border border-hairline-soft bg-white p-6 shadow-card"
     >
       {/* Dates / Months / Flexible */}
       <div className="mx-auto mb-6 flex w-fit items-center gap-1 rounded-full bg-surface-soft p-1">
@@ -78,11 +78,10 @@ export function DatePickerPopover({
                 key={label}
                 type="button"
                 onClick={() => setFlex(i)}
-                className={`rounded-full border px-4 py-2 t-button-sm transition-colors duration-150 ${
-                  flex === i
+                className={`rounded-full border px-4 py-2 t-button-sm transition-colors duration-150 ${flex === i
                     ? "border-ink bg-white text-ink"
                     : "border-hairline text-bodytext hover:border-ink"
-                }`}
+                  }`}
               >
                 {label}
               </button>
@@ -100,9 +99,8 @@ export function DatePickerPopover({
                 key={n}
                 type="button"
                 onClick={() => applyMonths(n)}
-                className={`h-24 w-24 rounded-2xl border-2 transition-colors duration-150 ${
-                  monthsAway === n ? "border-ink" : "border-hairline hover:border-ink"
-                }`}
+                className={`h-24 w-24 rounded-2xl border-2 transition-colors duration-150 ${monthsAway === n ? "border-ink" : "border-hairline hover:border-ink"
+                  }`}
               >
                 <span className="block t-display-sm text-ink">{n}</span>
                 <span className="block t-body-sm text-muted">
