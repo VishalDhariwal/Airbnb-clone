@@ -5,7 +5,6 @@ venv/
 __pycache__/
 *.pyc
 .pytest_cache/
-
 # Environment & local secrets (NEVER commit these)
 .env
 .env.local
