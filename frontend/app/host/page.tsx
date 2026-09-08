@@ -8,20 +8,22 @@ import { api } from "@/lib/api";
 import { HostListing, HostReservation } from "@/lib/types/host";
 import { HostMetrics } from "@/components/host/HostMetrics";
 import { HostListingsSection } from "@/components/host/HostListingsSection";
-import { HostReservationsTable } from "@/components/host/HostReservationsTable";
 import { HostEditModal } from "@/components/host/HostEditModal";
 import { HostDeleteDialog } from "@/components/host/HostDeleteDialog";
 import { HostEmptyState } from "@/components/host/HostEmptyState";
+import { HostCalendar } from "@/components/host/HostCalendar";
+import { HostToday } from "@/components/host/HostToday";
 import { HostDashboardSkeleton } from "@/components/ui/Skeleton";
-import { Plus, Sparkles, Building2, Calendar, Loader2 } from "lucide-react";
+import { Plus, Sparkles, Loader2, MessageSquare } from "lucide-react";
 
 export default function HostDashboardPage() {
   const { user, loading: isAuthLoading } = useAuth();
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<"overview" | "reservations">("overview");
+  const [activeTab, setActiveTab] = useState<"today" | "calendar" | "listings" | "messages">("today");
   const [listings, setListings] = useState<HostListing[]>([]);
   const [reservations, setReservations] = useState<HostReservation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Modals state
   const [editingListing, setEditingListing] = useState<HostListing | null>(null);
@@ -30,6 +32,7 @@ export default function HostDashboardPage() {
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
+      setLoadError(null);
       const [listingsData, reservationsData] = await Promise.all([
         api.get<HostListing[]>("/host/listings"),
         api.get<HostReservation[]>("/host/reservations"),
@@ -38,6 +41,7 @@ export default function HostDashboardPage() {
       setReservations(reservationsData || []);
     } catch (err) {
       console.error("Failed to fetch host data:", err);
+      setLoadError(err instanceof Error ? err.message : "Could not load your hosting data");
     } finally {
       setIsLoading(false);
     }
@@ -45,9 +49,22 @@ export default function HostDashboardPage() {
 
   useEffect(() => {
     if (user?.is_host) {
-      fetchData();
+      queueMicrotask(fetchData);
     }
   }, [user, fetchData]);
+
+  useEffect(() => {
+    const syncTabFromHash = () => {
+      const requestedView = new URLSearchParams(window.location.search).get("view");
+      if (window.location.hash === "#calendar" || requestedView === "calendar") setActiveTab("calendar");
+      else if (window.location.hash === "#listings" || requestedView === "listings") setActiveTab("listings");
+      else if (window.location.hash === "#messages" || requestedView === "messages") setActiveTab("messages");
+      else setActiveTab("today");
+    };
+    queueMicrotask(syncTabFromHash);
+    window.addEventListener("hashchange", syncTabFromHash);
+    return () => window.removeEventListener("hashchange", syncTabFromHash);
+  }, []);
 
   const handleToggleActive = async (id: number, currentStatus: boolean) => {
     try {
@@ -94,80 +111,42 @@ export default function HostDashboardPage() {
   }
 
   return (
-    <div className="max-w-[1280px] mx-auto px-4 sm:px-8 py-8 sm:py-10 space-y-8">
-      {/* Header Greeting & Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-hairline pb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-ink">
-              Welcome back, {user.name.split(" ")[0]}!
-            </h1>
-            {user.is_superhost && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rausch bg-red-50 px-2.5 py-0.5 rounded-full border border-red-100">
-                <Sparkles className="w-3 h-3" />
-                <span>Superhost</span>
-              </span>
-            )}
-          </div>
-          <p className="text-xs sm:text-sm text-muted mt-1">
-            Manage your listings, calendar availability, and guest reservations.
-          </p>
-        </div>
-
-        <Link
-          href="/host/new"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-rausch hover:bg-rausch-hover text-white text-xs font-semibold shadow-sm transition self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Create listing</span>
-        </Link>
-      </div>
-
-      {/* Tabs Switcher */}
-      <div className="flex items-center gap-6 border-b border-hairline">
-        <button
-          onClick={() => setActiveTab("overview")}
-          className={`pb-3 text-sm font-semibold flex items-center gap-2 transition relative ${
-            activeTab === "overview"
-              ? "text-ink border-b-2 border-ink"
-              : "text-muted hover:text-ink"
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          <span>Listings & Overview</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("reservations")}
-          className={`pb-3 text-sm font-semibold flex items-center gap-2 transition relative ${
-            activeTab === "reservations"
-              ? "text-ink border-b-2 border-ink"
-              : "text-muted hover:text-ink"
-          }`}
-        >
-          <Calendar className="w-4 h-4" />
-          <span>Reservations ({reservations.length})</span>
-        </button>
-      </div>
-
-      {/* Main Content Body */}
+    <div id="today" className="min-h-[calc(100vh-81px)] bg-white">
       {isLoading ? (
-        <HostDashboardSkeleton />
-      ) : activeTab === "overview" ? (
-        <div className="space-y-8">
-          <HostMetrics listings={listings} reservations={reservations} />
-          <div className="pt-4">
-            <h2 className="text-lg font-bold text-ink mb-4">Your Properties</h2>
-            <HostListingsSection
-              listings={listings}
-              onToggleActive={handleToggleActive}
-              onEdit={(l) => setEditingListing(l)}
-              onDelete={(l) => setDeletingListing(l)}
-            />
+        <div className="mx-auto max-w-[1280px] px-6 py-10"><HostDashboardSkeleton /></div>
+      ) : loadError ? (
+        <main className="mx-auto flex min-h-[calc(100vh-81px)] max-w-lg flex-col items-center justify-center px-6 pb-24 text-center">
+          <h1 className="text-2xl font-bold text-ink">We couldn’t load your listings</h1>
+          <p className="mt-3 text-sm text-muted">{loadError}</p>
+          <button type="button" onClick={fetchData} className="mt-6 rounded-xl bg-ink px-6 py-3 text-sm font-semibold text-white">Try again</button>
+        </main>
+      ) : activeTab === "today" ? (
+        <HostToday listings={listings} reservations={reservations} />
+      ) : activeTab === "listings" ? (
+        <main id="listings" className="mx-auto max-w-[1280px] space-y-8 px-4 py-8 sm:px-8 sm:py-10">
+          <div className="flex flex-col justify-between gap-4 border-b border-hairline pb-6 sm:flex-row sm:items-center">
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-ink sm:text-3xl">Your listings</h1>
+                {user.is_superhost && <Sparkles className="h-5 w-5 text-rausch" />}
+              </div>
+              <p className="mt-1 text-sm text-muted">Manage, edit and publish your properties.</p>
+            </div>
+            <Link href="/host/new" className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-rausch px-5 py-2.5 text-sm font-semibold text-white hover:bg-rausch-active sm:self-auto">
+              <Plus className="h-4 w-4" /> Create listing
+            </Link>
           </div>
-        </div>
+          <HostMetrics listings={listings} reservations={reservations} />
+          <HostListingsSection listings={listings} onToggleActive={handleToggleActive} onEdit={setEditingListing} onDelete={setDeletingListing} />
+        </main>
+      ) : activeTab === "calendar" ? (
+        <main id="calendar" className="mx-auto max-w-[1280px] px-4 py-8 sm:px-8 sm:py-10"><HostCalendar listings={listings} /></main>
       ) : (
-        <HostReservationsTable reservations={reservations} />
+        <main id="messages" className="mx-auto flex min-h-[calc(100vh-81px)] max-w-xl flex-col items-center justify-center px-6 pb-24 text-center">
+          <span className="flex h-20 w-20 items-center justify-center rounded-full bg-surface-soft"><MessageSquare className="h-8 w-8 text-muted" /></span>
+          <h1 className="mt-6 text-3xl font-bold tracking-tight text-ink">No new messages</h1>
+          <p className="mt-3 text-base text-muted">Messages from guests will appear here.</p>
+        </main>
       )}
 
       {/* Edit Listing Modal */}

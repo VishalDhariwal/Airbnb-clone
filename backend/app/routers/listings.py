@@ -70,17 +70,41 @@ def get_listings(
 
 
 @router.get("/home-sections", response_model=List[HomeSectionOut])
-def get_home_sections(db: Session = Depends(get_db)):
+def get_home_sections(tab: Optional[str] = Query(None), db: Session = Depends(get_db)):
     """Returns curated horizontal carousel sections for the homepage (matches reference 01/02)."""
-    sections = [
-        ("north-goa", "Popular homes in North Goa", "Goa"),
-        ("dehradun", "Available in Dehradun this weekend", "Dehradun"),
-        ("new-delhi", "Stay in New Delhi", "New Delhi"),
-        ("gurugram", "Available in Gurgaon District this weekend", "Gurugram"),
-    ]
+    if tab == "experiences":
+        sections = [
+            ("exp-goa", "Top Experiences in Goa", "Goa"),
+            ("exp-manali", "Himalayan Outdoor Adventures in Manali", "Manali"),
+            ("exp-jaipur", "Cultural Stays & Workshops in Jaipur", "Jaipur"),
+            ("exp-dehradun", "Nature Walks & Retreats in Dehradun", "Dehradun"),
+        ]
+    elif tab == "services":
+        sections = [
+            ("serv-goa", "Luxury Serviced Villas in Goa", "Goa"),
+            ("serv-mumbai", "Executive Stays & Services in Mumbai", "Mumbai"),
+            ("serv-delhi", "Heritage Concierge Stays in New Delhi", "New Delhi"),
+            ("serv-gurugram", "Premium Stays & Services in Gurugram", "Gurugram"),
+        ]
+    else:
+        # Default & "all" & "homes"
+        sections = [
+            ("newly-published", "Newly published homes", None),
+            ("north-goa", "Popular homes in North Goa", "Goa"),
+            ("dehradun", "Available in Dehradun this weekend", "Dehradun"),
+            ("new-delhi", "Stay in New Delhi", "New Delhi"),
+            ("gurugram", "Available in Gurgaon District this weekend", "Gurugram"),
+        ]
+
     results = []
     for sec_id, title, city in sections:
-        items, _ = search_listings(db=db, location=city, page=1, limit=8)
+        items, _ = search_listings(
+            db=db,
+            location=city,
+            sort="newest" if sec_id == "newly-published" else "recommended",
+            page=1,
+            limit=8,
+        )
         results.append(HomeSectionOut(id=sec_id, title=title, items=items))
     return results
 
@@ -222,4 +246,3 @@ def get_listing_quote(
         total_price=pricing["total_price"],
         available=is_avail,
     )
-

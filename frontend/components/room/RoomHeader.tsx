@@ -1,16 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Share, Heart } from "lucide-react";
 import { ListingDetail } from "@/lib/types";
 import { useWishlist } from "@/lib/hooks/useWishlist";
 import { useToast } from "@/lib/hooks/useToast";
-import { Share2, Heart } from "lucide-react";
+import { heartTap, springFast } from "@/lib/motion";
 
-interface RoomHeaderProps {
-  listing: ListingDetail;
-}
-
-export function RoomHeader({ listing }: RoomHeaderProps) {
+/** Reference 13: h1 on the left, Share / Save as underlined text links on the right. */
+export function RoomHeader({ listing }: { listing: ListingDetail }) {
   const { isSaved, toggleWishlist } = useWishlist();
   const { showToast } = useToast();
   const [copied, setCopied] = useState(false);
@@ -21,7 +20,7 @@ export function RoomHeader({ listing }: RoomHeaderProps) {
     try {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
-      showToast("Listing link copied to clipboard!", "info");
+      showToast("Listing link copied to clipboard", "info");
       setTimeout(() => setCopied(false), 2500);
     } catch {
       showToast("Could not copy link", "error");
@@ -29,35 +28,41 @@ export function RoomHeader({ listing }: RoomHeaderProps) {
   }
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 pt-2 pb-4">
-      {/* Listing Title */}
-      <h1 className="text-xl sm:text-2xl md:text-[26px] font-bold text-ink tracking-tight flex-1">
+    <div className="flex flex-col justify-between gap-3 pb-4 pt-2 sm:flex-row sm:items-center">
+      <h1 className="flex-1 text-[22px] font-semibold leading-[1.2] tracking-[-0.4px] text-ink sm:text-[26px]">
         {listing.title}
       </h1>
 
-      {/* Share & Save Action Buttons */}
-      <div className="flex items-center gap-4 text-sm font-semibold text-ink flex-shrink-0">
-        <button
+      <div className="flex shrink-0 items-center gap-1">
+        <motion.button
           onClick={handleShare}
-          className="flex items-center gap-2 hover:underline transition p-1"
+          whileTap={{ scale: 0.95 }}
+          transition={springFast}
           aria-label="Share listing"
+          className="flex items-center gap-2 rounded-lg px-3 py-2 t-button-sm font-semibold text-ink transition-colors duration-150 hover:bg-surface-soft"
         >
-          <Share2 className="w-4 h-4 text-ink" />
-          <span className="underline">{copied ? "Copied!" : "Share"}</span>
-        </button>
+          <Share className="h-4 w-4" />
+          <span className="underline underline-offset-2">
+            {copied ? "Copied" : "Share"}
+          </span>
+        </motion.button>
 
-        <button
+        <motion.button
           onClick={() => toggleWishlist(listing.id)}
-          className="flex items-center gap-2 hover:underline transition p-1"
+          whileTap={{ scale: 0.95 }}
+          animate={saved ? heartTap : { scale: 1 }}
+          transition={springFast}
           aria-label={saved ? "Remove from wishlist" : "Save to wishlist"}
+          aria-pressed={saved}
+          className="flex items-center gap-2 rounded-lg px-3 py-2 t-button-sm font-semibold text-ink transition-colors duration-150 hover:bg-surface-soft"
         >
           <Heart
-            className={`w-4 h-4 transition ${
+            className={`h-4 w-4 transition-colors duration-200 ${
               saved ? "fill-rausch text-rausch" : "text-ink"
             }`}
           />
-          <span className="underline">{saved ? "Saved" : "Save"}</span>
-        </button>
+          <span className="underline underline-offset-2">{saved ? "Saved" : "Save"}</span>
+        </motion.button>
       </div>
     </div>
   );

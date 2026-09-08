@@ -1,11 +1,15 @@
 "use client";
 
 import React from "react";
+import { usePathname } from "next/navigation";
 import { GlobeIcon } from "@/components/ui/Icons";
 
 export function Footer() {
+  const pathname = usePathname();
+  if (pathname.startsWith("/host")) return null;
+
   return (
-    <footer className="w-full bg-[#f7f7f7] border-t border-hairline mt-auto text-ink">
+    <footer className="w-full bg-surface-soft border-t border-hairline mt-auto text-ink">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-12 py-12">
         {/* 3 Columns */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-10 border-b border-hairline">

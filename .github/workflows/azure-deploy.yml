@@ -1,0 +1,184 @@
+name: Build and Publish Azure Container Images
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      push_latest:
+        description: 'Also tag and push as :latest'
+        required: false
+        type: boolean
+        default: true
+      platform:
+        description: 'Target platform for containers'
+        required: false
+        type: string
+        default: 'linux/amd64'
+
+env:
+  BACKEND_IMAGE_NAME: airbnb-clone-backend
+  FRONTEND_IMAGE_NAME: airbnb-clone-frontend
+
+jobs:
+  build-and-push:
+    name: Build & Push Docker Images to ACR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # ── Resolve ACR registry URL ─────────────────────────────────────────────
+      - name: Resolve Configuration
+        id: config
+        run: |
+          REGISTRY="${{ secrets.ACR_LOGIN_SERVER || vars.ACR_LOGIN_SERVER }}"
+          if [ -z "$REGISTRY" ]; then
+            echo "::error::Neither secrets.ACR_LOGIN_SERVER nor vars.ACR_LOGIN_SERVER is defined."
+            exit 1
+          fi
+          echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
+          echo "backend_image=$REGISTRY/${{ env.BACKEND_IMAGE_NAME }}" >> $GITHUB_OUTPUT
+          echo "frontend_image=$REGISTRY/${{ env.FRONTEND_IMAGE_NAME }}" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # ── Option 1: Azure Service Principal (recommended) ──────────────────────
+      - name: Azure CLI Login
+        if: ${{ secrets.AZURE_CREDENTIALS != '' }}
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: ACR Login via Azure CLI
+        if: ${{ secrets.AZURE_CREDENTIALS != '' }}
+        run: |
+          REGISTRY="${{ steps.config.outputs.registry }}"
+          ACR_NAME="${REGISTRY%%.*}"
+          az acr login --name "$ACR_NAME"
+
+      # ── Option 2: Direct ACR Username/Password ───────────────────────────────
+      - name: ACR Login via Registry Credentials
+        if: ${{ secrets.AZURE_CREDENTIALS == '' && secrets.ACR_USERNAME != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ steps.config.outputs.registry }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      # ── Backend Image ────────────────────────────────────────────────────────
+      - name: Backend – Docker Metadata & Tags
+        id: meta_backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.config.outputs.backend_image }}
+          tags: |
+            type=raw,value=latest,enable=${{ inputs.push_latest == true || github.ref == 'refs/heads/main' }}
+            type=sha,format=short,prefix=
+            type=sha,format=long,prefix=sha-
+            type=semver,pattern={{version}}
+            type=ref,event=branch
+            type=ref,event=tag
+
+      - name: Backend – Build & Push
+        id: build_backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: backend
+          platforms: ${{ inputs.platform || 'linux/amd64' }}
+          push: true
+          tags: ${{ steps.meta_backend.outputs.tags }}
+          labels: ${{ steps.meta_backend.outputs.labels }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+
+      # ── Frontend Image ───────────────────────────────────────────────────────
+      - name: Frontend – Docker Metadata & Tags
+        id: meta_frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.config.outputs.frontend_image }}
+          tags: |
+            type=raw,value=latest,enable=${{ inputs.push_latest == true || github.ref == 'refs/heads/main' }}
+            type=sha,format=short,prefix=
+            type=sha,format=long,prefix=sha-
+            type=semver,pattern={{version}}
+            type=ref,event=branch
+            type=ref,event=tag
+
+      - name: Frontend – Build & Push
+        id: build_frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: frontend
+          platforms: ${{ inputs.platform || 'linux/amd64' }}
+          push: true
+          tags: ${{ steps.meta_frontend.outputs.tags }}
+          labels: ${{ steps.meta_frontend.outputs.labels }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.yourapp.azurewebsites.net' }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+      # ── Summary ──────────────────────────────────────────────────────────────
+      - name: Publish Action Summary
+        run: |
+          echo "### 🚀 Azure Container Registry – Airbnb Clone" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service   | Digest |" >> $GITHUB_STEP_SUMMARY
+          echo "| --------- | ------ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend   | \`${{ steps.build_backend.outputs.digest }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend  | \`${{ steps.build_frontend.outputs.digest }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### Backend Tags" >> $GITHUB_STEP_SUMMARY
+          for tag in ${{ steps.meta_backend.outputs.tags }}; do
+            echo "- \`$tag\`" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "#### Frontend Tags" >> $GITHUB_STEP_SUMMARY
+          for tag in ${{ steps.meta_frontend.outputs.tags }}; do
+            echo "- \`$tag\`" >> $GITHUB_STEP_SUMMARY
+          done
+
+  # ── Optional: Deploy to Azure Web App ──────────────────────────────────────
+  deploy-azure:
+    name: Deploy to Azure App Service
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    environment: production
+
+    steps:
+      - name: Resolve Configuration
+        id: config
+        run: |
+          REGISTRY="${{ secrets.ACR_LOGIN_SERVER || vars.ACR_LOGIN_SERVER }}"
+          echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy Backend to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_BACKEND_APP_NAME }}
+          images: ${{ steps.config.outputs.registry }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+
+      - name: Deploy Frontend to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_FRONTEND_APP_NAME }}
+          images: ${{ steps.config.outputs.registry }}/${{ env.FRONTEND_IMAGE_NAME }}:latest

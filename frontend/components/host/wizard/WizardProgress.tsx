@@ -4,6 +4,8 @@ import React from "react";
 import Link from "next/link";
 import { AirbnbLogo } from "@/components/ui/Icons";
 import { ChevronLeft, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { springTight, springFast, tapScaleSubtle } from "@/lib/motion";
 
 interface WizardProgressProps {
   currentStep: number;
@@ -50,9 +52,11 @@ export function WizardProgress({
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-hairline z-40">
         {/* Visual Progress Line */}
         <div className="w-full h-1.5 bg-surface-soft">
-          <div
-            className="h-full bg-ink transition-all duration-300 ease-out"
-            style={{ width: `${percent}%` }}
+          <motion.div
+            className="h-full bg-ink"
+            initial={false}
+            animate={{ width: `${percent}%` }}
+            transition={springTight}
           />
         </div>
 
@@ -72,15 +76,17 @@ export function WizardProgress({
               Step {currentStep} of {totalSteps}
             </span>
 
-            <button
+            <motion.button
               type="button"
               onClick={onNext}
               disabled={isNextDisabled || isSubmitting}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-rausch hover:bg-rausch-hover text-white text-xs font-semibold shadow-sm transition disabled:opacity-40"
+              whileTap={isNextDisabled || isSubmitting ? undefined : tapScaleSubtle}
+              transition={springFast}
+              className="inline-flex items-center gap-2 rounded-sm bg-rausch px-6 py-3 t-button-md font-semibold text-white transition-colors duration-150 hover:bg-rausch-active disabled:cursor-not-allowed disabled:bg-rausch-disabled"
             >
               {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               <span>{nextLabel}</span>
-            </button>
+            </motion.button>
           </div>
         </div>
       </footer>

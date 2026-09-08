@@ -21,6 +21,8 @@
     --error-hover: #B32505;
     --on-primary: #FFFFFF;
     --scrim: rgba(0, 0, 0, 0.5);
+    --motion-springs-fast-duration: 451.75ms;
+    --motion-springs-fast-easing: linear(0, 0.1856, 0.4653, 0.6823, 0.8223, 0.905, 0.9513, 0.9764, 0.9896, 0.9965, 1);
   }
 
   body {
@@ -29,6 +31,30 @@
     font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 

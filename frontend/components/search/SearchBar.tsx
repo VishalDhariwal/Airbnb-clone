@@ -1,28 +1,34 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { DestinationDropdown } from "./DestinationDropdown";
 import { DatePickerPopover } from "./DatePickerPopover";
 import { GuestStepper } from "./GuestStepper";
 import { useSearch } from "@/lib/hooks/useSearch";
+import { formatRangeLabel } from "@/lib/dates";
+import { SearchIcon } from "@/components/ui/Icons";
+import { springFast, springMedium, fadeFast } from "@/lib/motion";
 
 type ActivePanel = "where" | "when" | "who" | null;
 
-function formatWhenLabel(checkIn: string, checkOut: string) {
-  if (!checkIn && !checkOut) return "Add dates";
-  if (checkIn && checkOut) {
-    const d1 = new Date(checkIn);
-    const d2 = new Date(checkOut);
-    const m1 = d1.toLocaleDateString("en-GB", { month: "short" });
-    return `${d1.getDate()}–${d2.getDate()} ${m1}`;
-  }
-  return checkIn || "Add dates";
+interface SearchBarProps {
+  /** Called after a search fires, so the navbar can collapse the bar. */
+  onSubmitted?: () => void;
 }
 
-export function SearchBar() {
+/**
+ * The signature element (DESIGN_SYSTEM.md §7.2, reference 01).
+ *
+ * The behaviour people notice: when a segment is active the *bar* goes grey and the
+ * active segment stays white and raised — the inverse of what you'd expect. The
+ * white lozenge is animated with a shared `layoutId`, so it slides between segments
+ * instead of blinking from one to the next.
+ */
+export function SearchBar({ onSubmitted }: SearchBarProps) {
   const { filters, executeSearch } = useSearch();
   const [activePanel, setActivePanel] = useState<ActivePanel>(null);
+  const [hovered, setHovered] = useState<ActivePanel>(null);
 
   const [location, setLocation] = useState(filters.location);
   const [checkIn, setCheckIn] = useState(filters.checkIn);
@@ -37,6 +43,18 @@ export function SearchBar() {
   const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setLocation(filters.location);
+    setCheckIn(filters.checkIn);
+    setCheckOut(filters.checkOut);
+    setGuests({
+      adults: filters.adults || 1,
+      children: filters.children || 0,
+      infants: filters.infants || 0,
+      pets: filters.pets || 0,
+    });
+  }, [filters]);
+
+  useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (barRef.current && !barRef.current.contains(e.target as Node)) {
         setActivePanel(null);
@@ -46,150 +64,202 @@ export function SearchBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  function handleSearchClick(e: React.MouseEvent) {
-    e.stopPropagation();
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setActivePanel(null);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  function handleSearchClick(e?: React.SyntheticEvent) {
+    if (e) e.stopPropagation();
     setActivePanel(null);
-    executeSearch({
-      location: location.trim(),
-      checkIn,
-      checkOut,
-      ...guests,
-    });
+    executeSearch({ location: location.trim(), checkIn, checkOut, ...guests });
+    onSubmitted?.();
   }
 
   const totalGuests = guests.adults + guests.children;
   const guestLabel =
-    totalGuests > 1
-      ? `${totalGuests} guests`
-      : totalGuests === 1
-      ? "1 guest"
-      : "Add guests";
+    totalGuests > 1 ? `${totalGuests} guests` : totalGuests === 1 ? "1 guest" : "Add guests";
+  const whenLabel = formatRangeLabel(checkIn, checkOut);
 
-  const whenLabel = formatWhenLabel(checkIn, checkOut);
+  const isOpen = activePanel !== null;
+  /** Hide the divider that sits next to a lit-up segment. */
+  const lit = activePanel ?? hovered;
+  const showDivider1 = lit !== "where" && lit !== "when";
+  const showDivider2 = lit !== "when" && lit !== "who";
+
+  const segment = (id: Exclude<ActivePanel, null>) => ({
+    onMouseEnter: () => setHovered(id),
+    onMouseLeave: () => setHovered(null),
+    onClick: () => setActivePanel(id),
+  });
+
+  function segmentClass(id: Exclude<ActivePanel, null>, grow: string) {
+    const isActive = activePanel === id;
+    return `${grow} relative min-w-0 cursor-pointer rounded-full px-8 py-3.5 text-left ${
+      !isActive && hovered === id ? "bg-black/[0.04]" : ""
+    }`;
+  }
 
   return (
-    <div ref={barRef} className="relative w-full max-w-[850px] mx-auto">
-      {/* 3-Panel Main Bar: Where | When | Who */}
-      <div
-        className={`flex items-center rounded-full border border-hairline shadow-[0_3px_12px_rgba(0,0,0,0.08)] hover:shadow-md transition-all duration-300 bg-white ${
-          activePanel ? "bg-[#f7f7f7]" : ""
-        }`}
+    <div ref={barRef} className="relative mx-auto w-full max-w-[850px]">
+      <motion.div
+        className="flex h-[72px] items-center rounded-full border border-hairline"
+        initial={false}
+        animate={{ backgroundColor: isOpen ? "#EBEBEB" : "#FFFFFF" }}
+        transition={fadeFast}
+        style={{
+          boxShadow:
+            "rgba(0,0,0,0.02) 0 0 0 1px, rgba(0,0,0,0.04) 0 2px 6px 0, rgba(0,0,0,0.10) 0 4px 8px 0",
+        }}
       >
-        {/* 1. Where Panel */}
-        <div
-          onClick={() => setActivePanel("where")}
-          className={`flex-1 min-w-0 py-3.5 px-8 rounded-full cursor-pointer transition-all duration-200 ${
-            activePanel === "where"
-              ? "bg-[#ebebeb] shadow-sm"
-              : "hover:bg-[#ebebeb]/60"
-          }`}
-        >
-          <label className="block text-xs font-bold text-ink cursor-pointer">
-            Where
-          </label>
-          <input
-            type="text"
-            readOnly
-            value={location || "Search destinations"}
-            className={`w-full bg-transparent text-sm truncate outline-none cursor-pointer mt-0.5 ${
-              location ? "text-ink font-semibold" : "text-muted"
-            }`}
-          />
+        {/* --- Where --- */}
+        <div {...segment("where")} className={segmentClass("where", "flex-[1.15]")}>
+          {activePanel === "where" && <ActiveLozenge />}
+          <div className="relative">
+            <label className="block cursor-pointer text-[12px] font-semibold text-ink">
+              Where
+            </label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearchClick(e);
+                }
+              }}
+              placeholder="Search destinations"
+              className="mt-0.5 w-full cursor-pointer truncate bg-transparent t-body-sm text-ink outline-none placeholder:text-muted"
+            />
+          </div>
         </div>
 
-        {/* Divider 1 */}
-        {activePanel !== "where" && activePanel !== "when" && (
-          <div className="h-8 w-px bg-hairline" />
-        )}
+        <Divider show={showDivider1} />
 
-        {/* 2. When Panel */}
-        <div
-          onClick={() => setActivePanel("when")}
-          className={`flex-1 min-w-0 py-3.5 px-8 rounded-full cursor-pointer transition-all duration-200 ${
-            activePanel === "when"
-              ? "bg-[#ebebeb] shadow-sm"
-              : "hover:bg-[#ebebeb]/60"
-          }`}
-        >
-          <label className="block text-xs font-bold text-ink cursor-pointer">
-            When
-          </label>
-          <span
-            className={`block text-sm truncate mt-0.5 ${
-              checkIn ? "text-ink font-semibold" : "text-muted"
-            }`}
-          >
-            {whenLabel}
-          </span>
+        {/* --- When --- */}
+        <div {...segment("when")} className={segmentClass("when", "flex-1")}>
+          {activePanel === "when" && <ActiveLozenge />}
+          <div className="relative">
+            <label className="block cursor-pointer text-[12px] font-semibold text-ink">
+              When
+            </label>
+            <span
+              className={`mt-0.5 block truncate t-body-sm ${
+                checkIn ? "text-ink" : "text-muted"
+              }`}
+            >
+              {whenLabel}
+            </span>
+          </div>
         </div>
 
-        {/* Divider 2 */}
-        {activePanel !== "when" && activePanel !== "who" && (
-          <div className="h-8 w-px bg-hairline" />
-        )}
+        <Divider show={showDivider2} />
 
-        {/* 3. Who Panel with Search Button */}
+        {/* --- Who + the orb --- */}
         <div
-          onClick={() => setActivePanel("who")}
-          className={`flex-[1.1] min-w-0 py-2 pl-8 pr-2.5 rounded-full cursor-pointer transition-all duration-200 flex items-center justify-between gap-2 ${
-            activePanel === "who"
-              ? "bg-[#ebebeb] shadow-sm"
-              : "hover:bg-[#ebebeb]/60"
-          }`}
+          {...segment("who")}
+          className={`${segmentClass("who", "flex-[1.25]")} flex items-center gap-2 !py-2 !pr-2`}
         >
-          <div className="min-w-0 flex-1">
-            <label className="block text-xs font-bold text-ink cursor-pointer">
+          {activePanel === "who" && <ActiveLozenge />}
+          <div className="relative min-w-0 flex-1 py-1.5">
+            <label className="block cursor-pointer text-[12px] font-semibold text-ink">
               Who
             </label>
             <span
-              className={`block text-sm truncate mt-0.5 ${
-                totalGuests > 0 ? "text-ink font-semibold" : "text-muted"
+              className={`mt-0.5 block truncate t-body-sm ${
+                totalGuests > 1 ? "text-ink" : "text-muted"
               }`}
             >
               {guestLabel}
             </span>
           </div>
 
-          {/* Crimson Circular Search Action Button */}
-          <button
+          {/* The orb widens into a labelled pill while a panel is open — reference 01 */}
+          <motion.button
             type="button"
             onClick={handleSearchClick}
-            className="w-12 h-12 rounded-full bg-[#e01560] hover:bg-[#d70466] text-white flex items-center justify-center transition flex-shrink-0 shadow-sm"
             aria-label="Search"
+            layout
+            transition={springMedium}
+            whileTap={{ scale: 0.94 }}
+            className="relative z-10 flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-rausch px-[14px] text-white transition-colors duration-150 hover:bg-rausch-active"
           >
-            <Search className="w-4 h-4 stroke-[2.5]" />
-          </button>
+            <SearchIcon className="h-4 w-4 shrink-0" />
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.span
+                  key="label"
+                  className="t-button-md overflow-hidden whitespace-nowrap font-semibold"
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: "auto", opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={springFast}
+                >
+                  Search
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Popovers */}
-      {activePanel === "where" && (
-        <DestinationDropdown
-          value={location}
-          onChange={(loc) => setLocation(loc)}
-          onClose={() => setActivePanel("when")}
-        />
-      )}
-
-      {activePanel === "when" && (
-        <DatePickerPopover
-          checkIn={checkIn}
-          checkOut={checkOut}
-          onChange={(ci, co) => {
-            setCheckIn(ci);
-            setCheckOut(co);
-          }}
-          onClose={() => setActivePanel("who")}
-        />
-      )}
-
-      {activePanel === "who" && (
-        <GuestStepper
-          guests={guests}
-          onChange={(newGuests) => setGuests(newGuests)}
-          onClose={() => setActivePanel(null)}
-        />
-      )}
+      {/* --- Panels --- */}
+      <AnimatePresence>
+        {activePanel === "where" && (
+          <DestinationDropdown
+            key="where"
+            value={location}
+            onChange={setLocation}
+            onClose={() => setActivePanel("when")}
+          />
+        )}
+        {activePanel === "when" && (
+          <DatePickerPopover
+            key="when"
+            checkIn={checkIn}
+            checkOut={checkOut}
+            onChange={(ci, co) => {
+              setCheckIn(ci);
+              setCheckOut(co);
+              if (ci && co) setActivePanel("who");
+            }}
+            onClose={() => setActivePanel("who")}
+          />
+        )}
+        {activePanel === "who" && (
+          <GuestStepper
+            key="who"
+            guests={guests}
+            onChange={setGuests}
+            onClose={() => setActivePanel(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+/** The white raised pill behind the active segment. Slides between segments. */
+function ActiveLozenge() {
+  return (
+    <motion.span
+      layoutId="search-segment"
+      transition={springMedium}
+      className="absolute inset-0 rounded-full bg-white shadow-card"
+    />
+  );
+}
+
+function Divider({ show }: { show: boolean }) {
+  return (
+    <motion.span
+      className="h-8 w-px shrink-0 bg-hairline"
+      initial={false}
+      animate={{ opacity: show ? 1 : 0 }}
+      transition={fadeFast}
+    />
   );
 }

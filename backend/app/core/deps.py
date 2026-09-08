@@ -45,15 +45,60 @@ def get_current_user(
     return user
 
 
-def get_current_host(current_user: User = Depends(get_current_user)) -> User:
+def require_role(role_name: str):
     """
-    Ensures the authenticated user has host privileges.
-    Raises 403 Forbidden if user is not marked as a host.
+    Dependency factory to enforce that the authenticated user possesses the specified role.
     """
-    if not current_user.is_host:
+    def role_checker(current_user: User = Depends(get_current_user)) -> User:
+        if not current_user.has_role(role_name):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"{role_name.capitalize()} privileges required for this action",
+            )
+        return current_user
+
+    return role_checker
+
+
+def require_any_role(*role_names: str):
+    """
+    Dependency factory to ensure user has at least one of the provided roles.
+    """
+    def any_role_checker(current_user: User = Depends(get_current_user)) -> User:
+        if not any(current_user.has_role(r) for r in role_names):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"One of the following privileges required: {', '.join(role_names)}",
+            )
+        return current_user
+
+    return any_role_checker
+
+
+def require_host(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Ensures the authenticated user has host privileges via RBAC or is_host.
+    """
+    if not current_user.has_role("host"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Host privileges required for this action",
+        )
+    return current_user
+
+
+# Backward compatibility alias
+get_current_host = require_host
+
+
+def require_traveller(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Ensures the authenticated user has traveller privileges.
+    """
+    if not current_user.has_role("traveller"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Traveller privileges required for this action",
         )
     return current_user
 

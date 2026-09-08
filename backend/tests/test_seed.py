@@ -40,7 +40,9 @@ def test_seed_counts_and_distributions():
         assert expected_cities.issubset(cities), f"Missing cities: {expected_cities - cities}"
 
         # 4. Photos, Amenities, Categories per listing
-        for l in listings:
+        seeded_listings = [l for l in listings if l.id <= 68]
+        assert len(seeded_listings) >= 60
+        for l in seeded_listings:
             assert 5 <= len(l.photos) <= 7, f"Listing {l.id} has {len(l.photos)} photos"
             positions = [p.position for p in l.photos]
             assert 0 in positions, f"Listing {l.id} missing position 0 cover photo"

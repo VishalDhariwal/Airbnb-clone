@@ -337,3 +337,87 @@ fontFamily: { sans: ['var(--font-inter)', 'system-ui', 'sans-serif'] },
 Set the type scale as explicit utility classes (`.t-display-xl`, `.t-body-sm`, …) in
 `globals.css` rather than sprinkling `text-[22px] font-medium tracking-[-0.44px]` through
 components. One place to change, and it keeps JSX readable.
+
+---
+
+## 11. Motion
+
+> Added when the UI was brought in line with the live site. Every animation in the app
+> comes from `frontend/lib/motion.ts`. Same rule as colour: if you need a curve that
+> isn't in that file, add it there — don't inline a transition in a component.
+
+We use **framer-motion**. Airbnb's own site ships spring curves as CSS `linear()`
+easings; framer's spring type gets us the same feel with far less code, and it gives us
+`AnimatePresence` (exit animations) and `layoutId` (shared-element transitions), neither
+of which plain CSS can do.
+
+### 11.1 The two-curve rule
+
+The thing that makes the real site feel expensive is that it doesn't animate everything
+the same way:
+
+- Anything that **changes size or position** uses a **spring** — the search bar
+  expanding, a modal arriving, the map sliding in, the mobile sheet.
+- Anything that only **changes colour or opacity** uses a **short ease** (150–250ms) —
+  hover, focus, fades, crossfades.
+
+Springs on colour look mushy. Eases on movement look mechanical. Getting this backwards
+is the most common way a clone feels "off" even when it looks right in a screenshot.
+
+### 11.2 The curves
+
+| Token | Feel | Used for |
+|---|---|---|
+| `springFast` | ~450ms settle | dropdowns, popovers, hearts, hover lifts, small pills |
+| `springMedium` | ~600ms settle | modals, search bar expand/collapse, sheets, sticky nav |
+| `springSlow` | ~800ms settle | full-screen overlays, the map split, page-level layout shifts |
+| `springTight` | no overshoot | progress bars, height animations — a bounce there reads as a bug |
+| `fadeFast` (150ms) | — | hover, focus ring, colour swaps |
+| `fadeBase` (250ms) | — | scrims, crossfades |
+| `fadeSlow` (400ms) | — | image fade-in |
+
+Easing for the non-spring curves is `cubic-bezier(0.2, 0, 0, 1)` — fast out of the gate,
+long settle. Entering uses it; **leaving is always faster** (140–200ms, `easeIn`). Enter
+slow, exit fast is what makes a modal feel responsive rather than sluggish.
+
+### 11.3 Shared variants
+
+`scrimVariants`, `modalVariants`, `popoverVariants`, `sheetVariants`, `fadeUpVariants`,
+`staggerContainer`, `toastVariants`, `slideVariants`, plus `heartTap`, `tapScale`
+(0.92 for circular controls) and `tapScaleSubtle` (0.97 for wide buttons).
+
+### 11.4 Shared-element transitions (`layoutId`)
+
+Five places use a shared layout element so the indicator *slides* between states instead
+of blinking:
+
+| `layoutId` | Where |
+|---|---|
+| `search-segment` | the white raised lozenge behind the active search bar segment |
+| `nav-tab-underline` | All / Homes / Experiences / Services |
+| `datepicker-tab` | Dates / Months / Flexible |
+| `room-nav-underline` | Photos / Amenities / Reviews / Location on the listing page |
+| `trips-tab-underline` | Upcoming / Past |
+
+### 11.5 Signature moments
+
+- **Search bar collapse.** On scroll the header height springs 184px → 80px, the product
+  tabs cross-fade out, the compact pill scales in from 0.9, and the big bar exits
+  upward at scale 0.92. On any non-home page, clicking the pill re-expands it over a
+  scrim. (References 01 and 02.)
+- **The orb.** While a search panel is open the Rausch circle widens into a pill with the
+  word "Search" — a `layout` animation on width, not two swapped elements.
+- **The heart.** Squash to 0.82, overshoot to 1.18, settle. The one place a visible
+  bounce is allowed.
+- **Card photos.** Slide horizontally on the chevrons; the wrapper scales 1.04 on card
+  hover. Two nested elements, because a CSS `scale` and a framer `x` on the same node
+  fight over `transform`.
+- **The 64px rating number** springs up as it scrolls into view and the sub-rating bars
+  fill from 0. It's the one loud typographic moment in the product — it earns an entrance.
+
+### 11.6 Reduced motion
+
+`<MotionConfig reducedMotion="user">` wraps the whole app in `app/layout.tsx`. Every
+transform/opacity animation collapses to an instant state change when the OS has
+"Reduce motion" on — no per-component guards. The `prefers-reduced-motion` block in
+`globals.css` still covers the handful of plain CSS transitions.

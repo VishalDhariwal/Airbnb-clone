@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { CloseIcon } from "@/components/ui/Icons";
+import { motion } from "framer-motion";
+import { Modal } from "@/components/ui/Modal";
+import { springFast, tapScaleSubtle } from "@/lib/motion";
 import {
   AMENITY_OPTIONS,
   COUNT_OPTIONS,
@@ -33,8 +35,6 @@ export function FiltersModal({
     setDraft(filters);
   }, [filters, isOpen]);
 
-  if (!isOpen) return null;
-
   function toggleAmenity(id: number) {
     setDraft((prev) => ({
       ...prev,
@@ -54,25 +54,36 @@ export function FiltersModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-[2px] animate-in fade-in duration-150">
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-hairline flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-150">
-        {/* Header */}
-        <div className="relative flex items-center justify-center px-6 py-4 border-b border-hairline-soft">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Filters"
+      size="md"
+      footer={
+        <div className="flex items-center justify-between">
           <button
-            onClick={onClose}
-            className="absolute left-6 p-1.5 rounded-full hover:bg-surface-soft transition text-ink"
-            aria-label="Close"
+            type="button"
+            onClick={handleClear}
+            className="t-button-md font-semibold text-ink underline underline-offset-2"
           >
-            <CloseIcon className="w-4 h-4" />
+            Clear all
           </button>
-          <h2 className="text-base font-bold text-ink">Filters</h2>
+          <motion.button
+            type="button"
+            onClick={handleApply}
+            whileTap={tapScaleSubtle}
+            transition={springFast}
+            className="rounded-lg bg-ink px-6 py-3 t-button-md font-semibold text-white transition-opacity duration-150 hover:opacity-90"
+          >
+            {resultCount !== undefined ? `Show ${resultCount} places` : "Show places"}
+          </motion.button>
         </div>
-
-        {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 divide-y divide-hairline-soft">
+      }
+    >
+      <div className="space-y-8 divide-y divide-hairline-soft p-6">
           {/* 1. Price Range */}
           <div>
-            <h3 className="text-lg font-semibold text-ink mb-1">Price range</h3>
+            <h3 className="t-display-sm text-ink mb-1">Price range</h3>
             <p className="text-xs text-muted mb-4">Nightly prices before taxes and fees</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -89,7 +100,7 @@ export function FiltersModal({
                       })
                     }
                     placeholder="1,000"
-                    className="w-full pl-7 pr-3 py-2.5 border border-hairline rounded-xl text-sm outline-none focus:border-ink"
+                    className="w-full pl-7 pr-3 py-2.5 border border-hairline rounded-lg t-body-sm outline-none focus:border-ink"
                   />
                 </div>
               </div>
@@ -107,7 +118,7 @@ export function FiltersModal({
                       })
                     }
                     placeholder="50,000+"
-                    className="w-full pl-7 pr-3 py-2.5 border border-hairline rounded-xl text-sm outline-none focus:border-ink"
+                    className="w-full pl-7 pr-3 py-2.5 border border-hairline rounded-lg t-body-sm outline-none focus:border-ink"
                   />
                 </div>
               </div>
@@ -116,7 +127,7 @@ export function FiltersModal({
 
           {/* 2. Type of place */}
           <div className="pt-6">
-            <h3 className="text-lg font-semibold text-ink mb-4">Type of place</h3>
+            <h3 className="t-display-sm text-ink mb-4">Type of place</h3>
             <div className="grid grid-cols-3 gap-3">
               {ROOM_TYPES.map((rt) => {
                 const isSelected = draft.roomType === rt.value;
@@ -125,7 +136,7 @@ export function FiltersModal({
                     key={rt.label}
                     type="button"
                     onClick={() => setDraft({ ...draft, roomType: rt.value })}
-                    className={`py-3 px-4 rounded-xl border text-sm font-semibold transition ${
+                    className={`py-3 px-4 rounded-lg border t-button-sm transition-colors duration-150 ${
                       isSelected
                         ? "border-ink bg-surface-soft text-ink"
                         : "border-hairline hover:border-ink text-bodytext"
@@ -140,7 +151,7 @@ export function FiltersModal({
 
           {/* 3. Property Type */}
           <div className="pt-6">
-            <h3 className="text-lg font-semibold text-ink mb-4">Property type</h3>
+            <h3 className="t-display-sm text-ink mb-4">Property type</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {PROPERTY_TYPES.map((pt) => {
                 const isSelected = draft.propertyType === pt.value;
@@ -154,7 +165,7 @@ export function FiltersModal({
                         propertyType: isSelected ? null : pt.value,
                       })
                     }
-                    className={`py-3 px-4 rounded-xl border text-sm font-semibold transition ${
+                    className={`py-3 px-4 rounded-lg border t-button-sm transition-colors duration-150 ${
                       isSelected
                         ? "border-ink bg-surface-soft text-ink"
                         : "border-hairline hover:border-ink text-bodytext"
@@ -169,7 +180,7 @@ export function FiltersModal({
 
           {/* 4. Bedrooms & Beds */}
           <div className="pt-6 space-y-4">
-            <h3 className="text-lg font-semibold text-ink">Rooms and beds</h3>
+            <h3 className="t-display-sm text-ink">Rooms and beds</h3>
             {[
               { title: "Bedrooms", key: "bedrooms" as const },
               { title: "Beds", key: "beds" as const },
@@ -182,7 +193,7 @@ export function FiltersModal({
                       key={val ?? "any"}
                       type="button"
                       onClick={() => setDraft({ ...draft, [row.key]: val })}
-                      className={`px-4 py-2 rounded-full border text-xs font-semibold flex-shrink-0 transition ${
+                      className={`px-4 py-2 rounded-full border t-button-sm flex-shrink-0 transition-colors duration-150 ${
                         draft[row.key] === val
                           ? "bg-ink text-white border-ink"
                           : "border-hairline hover:border-ink text-ink"
@@ -198,7 +209,7 @@ export function FiltersModal({
 
           {/* 5. Amenities */}
           <div className="pt-6">
-            <h3 className="text-lg font-semibold text-ink mb-4">Amenities</h3>
+            <h3 className="t-display-sm text-ink mb-4">Amenities</h3>
             <div className="grid grid-cols-2 gap-3">
               {AMENITY_OPTIONS.map((amenity) => {
                 const isChecked = draft.amenityIds.includes(amenity.id);
@@ -219,26 +230,7 @@ export function FiltersModal({
               })}
             </div>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-hairline-soft flex items-center justify-between bg-white">
-          <button
-            type="button"
-            onClick={handleClear}
-            className="text-sm font-semibold text-ink underline hover:text-muted transition"
-          >
-            Clear all
-          </button>
-          <button
-            type="button"
-            onClick={handleApply}
-            className="px-6 py-3 bg-ink text-white rounded-xl text-sm font-semibold hover:bg-neutral-800 transition"
-          >
-            {resultCount !== undefined ? `Show ${resultCount} places` : "Show places"}
-          </button>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 }

@@ -1,11 +1,33 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks/useAuth";
-import { ShieldCheck, UserCheck, Sparkles, ArrowRight } from "lucide-react";
+import { useToast } from "@/lib/hooks/useToast";
+import { ShieldCheck, UserCheck, Sparkles, ArrowRight, Loader2 } from "lucide-react";
 
 export function HostEmptyState() {
-  const { login, openLoginModal } = useAuth();
+  const router = useRouter();
+  const { user, login, openLoginModal, becomeHost } = useAuth();
+  const { showToast } = useToast();
+  const [isStarting, setIsStarting] = useState(false);
+
+  async function startHosting() {
+    if (!user) {
+      openLoginModal();
+      return;
+    }
+    try {
+      setIsStarting(true);
+      await becomeHost();
+      showToast("Your host account is ready", "success");
+      router.push("/host/new");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Could not start hosting", "error");
+    } finally {
+      setIsStarting(false);
+    }
+  }
 
   return (
     <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6">
@@ -20,6 +42,19 @@ export function HostEmptyState() {
         <p className="text-base sm:text-lg text-muted max-w-xl mx-auto">
           Share your space in India. Whether you have a villa in Goa, a heritage haveli in Jaipur, or an apartment in Mumbai.
         </p>
+      </div>
+
+      <div className="mt-8 flex justify-center">
+        <button
+          type="button"
+          onClick={startHosting}
+          disabled={isStarting}
+          className="inline-flex min-w-52 items-center justify-center gap-2 rounded-xl bg-rausch px-7 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-rausch-active disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {user ? "Start creating your listing" : "Log in to start hosting"}
+          {!isStarting ? <ArrowRight className="h-4 w-4" /> : null}
+        </button>
       </div>
 
       {/* 3 Pillars */}
@@ -73,7 +108,7 @@ export function HostEmptyState() {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
           <button
             onClick={() => login("priya.host@airbnb.test")}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-rausch hover:bg-rausch-hover text-white text-xs font-semibold shadow-sm transition"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-rausch hover:bg-rausch-active text-white text-xs font-semibold shadow-sm transition"
           >
             <span>Log in as Priya Sharma (Superhost)</span>
             <ArrowRight className="w-4 h-4" />

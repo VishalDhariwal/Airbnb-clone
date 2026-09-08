@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { easeStandard } from "@/lib/motion";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { ListingDetail, ReviewListResponse } from "@/lib/types";
@@ -16,6 +18,7 @@ import { RoomCalendarSection } from "@/components/room/RoomCalendarSection";
 import { BookingWidget } from "@/components/room/BookingWidget";
 import { RoomReviews } from "@/components/room/RoomReviews";
 import { StickyRoomNav } from "@/components/room/StickyRoomNav";
+import { MobileBookingBar } from "@/components/room/MobileBookingBar";
 import { RoomDetailSkeleton } from "@/components/ui/Skeleton";
 
 export default function RoomDetailPage() {
@@ -61,11 +64,11 @@ export default function RoomDetailPage() {
   if (error || !listing) {
     return (
       <div className="max-w-[1280px] mx-auto px-4 sm:px-8 py-20 text-center">
-        <h1 className="text-2xl font-bold text-ink mb-2">Listing not found</h1>
+        <h1 className="mb-2 t-display-sm text-ink">Listing not found</h1>
         <p className="text-sm text-muted mb-6">{error || "The requested listing could not be found."}</p>
         <button
           onClick={() => router.push("/")}
-          className="px-6 py-3 bg-ink text-white rounded-xl text-sm font-semibold hover:opacity-90 transition"
+          className="rounded-sm bg-ink px-6 py-3 t-button-md font-semibold text-white transition-opacity duration-150 hover:opacity-90"
         >
           Return to home
         </button>
@@ -74,8 +77,15 @@ export default function RoomDetailPage() {
   }
 
   const handleReserveScroll = () => {
-    const el = document.getElementById("booking-widget");
-    el?.scrollIntoView({ behavior: "smooth" });
+    // The reservation card is desktop-only, so on mobile aim at the calendar instead.
+    const target =
+      document.getElementById("booking-widget")?.offsetParent
+        ? "booking-widget"
+        : "calendar-section";
+    const el = document.getElementById(target);
+    if (!el) return;
+    const y = el.getBoundingClientRect().top + window.scrollY - 100;
+    window.scrollTo({ top: y, behavior: "smooth" });
   };
 
   return (
@@ -88,7 +98,19 @@ export default function RoomDetailPage() {
         onReserve={handleReserveScroll}
       />
 
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-8 md:px-12 py-6">
+      <MobileBookingBar
+        nightlyRate={listing.price_per_night}
+        avgRating={listing.avg_rating}
+        reviewCount={listing.review_count}
+        onReserve={handleReserveScroll}
+      />
+
+      <motion.div
+        className="mx-auto max-w-[1280px] px-6 py-6 md:px-10 lg:px-20"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: easeStandard }}
+      >
         {/* Title and Action Buttons */}
         <div id="room-header">
           <RoomHeader listing={listing} />
@@ -137,7 +159,7 @@ export default function RoomDetailPage() {
           </div>
 
           {/* Right Column: Sticky Booking Widget */}
-          <div id="booking-widget" className="lg:col-span-5 xl:col-span-4">
+          <div id="booking-widget" className="hidden lg:col-span-5 lg:block xl:col-span-4">
             <BookingWidget
               listingId={listing.id}
               nightlyRate={listing.price_per_night}
@@ -148,7 +170,7 @@ export default function RoomDetailPage() {
             />
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

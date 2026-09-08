@@ -41,7 +41,7 @@ const SearchContext = createContext<SearchContextType>({
   activeNavTab: "all",
   setActiveNavTab: () => {},
   isScrolled: false,
-  isSearchExpanded: true,
+  isSearchExpanded: false,
   setIsSearchExpanded: () => {},
 });
 
@@ -52,7 +52,26 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
   const [filters, setFilters] = useState<SearchFilters>(defaultFilters);
   const [activeNavTab, setActiveNavTab] = useState("all");
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isSearchExpanded, setIsSearchExpanded] = useState(true);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+
+  // Read URL search params on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const loc = params.get("location");
+    const ci = params.get("check_in");
+    const co = params.get("check_out");
+    const g = params.get("guests");
+    if (loc || ci || co || g) {
+      setFilters((prev) => ({
+        ...prev,
+        location: loc || prev.location,
+        checkIn: ci || prev.checkIn,
+        checkOut: co || prev.checkOut,
+        adults: g ? Math.max(1, parseInt(g, 10) || 1) : prev.adults,
+      }));
+    }
+  }, []);
 
   // Monitor scroll state for smooth navbar morphing
   useEffect(() => {
@@ -61,8 +80,6 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
       setIsScrolled(scrolled);
       if (scrolled) {
         setIsSearchExpanded(false);
-      } else {
-        setIsSearchExpanded(true);
       }
     }
 
@@ -84,9 +101,7 @@ export function SearchProvider({ children }: { children: React.ReactNode }) {
     const queryString = queryParams.toString();
     const targetUrl = queryString ? `/?${queryString}` : "/";
 
-    if (pathname !== "/") {
-      router.push(targetUrl);
-    }
+    router.push(targetUrl);
   };
 
   return (

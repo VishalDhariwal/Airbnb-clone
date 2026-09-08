@@ -72,6 +72,7 @@ async function request<T>(
   }
 
   const response = await fetch(url.toString(), {
+    cache: "no-store",
     ...customOptions,
     headers,
   });

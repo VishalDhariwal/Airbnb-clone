@@ -9,11 +9,20 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   isHost: boolean;
+  currentRole: string;
+  roles: string[];
   demoUsers: DemoUser[];
   isLoginModalOpen: boolean;
+  authModalMode: "login" | "signup";
   openLoginModal: () => void;
+  openSignupModal: () => void;
   closeLoginModal: () => void;
-  login: (email: string) => Promise<void>;
+  setAuthModalMode: (mode: "login" | "signup") => void;
+  login: (email: string, password?: string) => Promise<void>;
+  signup: (data: { name: string; email: string; password: string }) => Promise<void>;
+  demoLogin: (email: string) => Promise<void>;
+  becomeHost: () => Promise<User>;
+  switchRole: (role: "traveller" | "host") => Promise<User>;
   logout: () => void;
 }
 
@@ -25,12 +34,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState<boolean>(true);
   const [demoUsers, setDemoUsers] = useState<DemoUser[]>([]);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<"login" | "signup">("login");
 
   useEffect(() => {
     // Load stored token and fetch current user
     const storedToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (storedToken) {
-      setToken(storedToken);
+      queueMicrotask(() => setToken(storedToken));
       api
         .get<User>("/auth/me")
         .then((u) => setUser(u))
@@ -41,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
         .finally(() => setLoading(false));
     } else {
-      setLoading(false);
+      queueMicrotask(() => setLoading(false));
     }
 
     // Load available demo users for switcher
@@ -51,14 +61,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch(() => setDemoUsers([]));
   }, []);
 
-  async function login(email: string) {
+  async function login(email: string, password?: string) {
     setLoading(true);
     try {
-      const res = await api.post<TokenResponse>("/auth/login", { email });
+      // If password omitted, attempt default password or demo-login
+      const payload = { email: email.trim().toLowerCase(), password: password || "password123" };
+      const res = await api.post<TokenResponse>("/auth/login", payload);
       localStorage.setItem("token", res.access_token);
       setToken(res.access_token);
       setUser(res.user);
       setIsLoginModalOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function signup(data: { name: string; email: string; password: string }) {
+    setLoading(true);
+    try {
+      const payload = {
+        name: data.name.trim(),
+        email: data.email.trim().toLowerCase(),
+        password: data.password,
+      };
+      const res = await api.post<TokenResponse>("/auth/signup", payload);
+      localStorage.setItem("token", res.access_token);
+      setToken(res.access_token);
+      setUser(res.user);
+      setIsLoginModalOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function demoLogin(email: string) {
+    setLoading(true);
+    try {
+      const res = await api.post<TokenResponse>("/auth/demo-login", { email: email.trim().toLowerCase() });
+      localStorage.setItem("token", res.access_token);
+      setToken(res.access_token);
+      setUser(res.user);
+      setIsLoginModalOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function becomeHost() {
+    const updatedUser = await api.post<User>("/host/onboard");
+    setUser(updatedUser);
+    return updatedUser;
+  }
+
+  async function switchRole(role: "traveller" | "host") {
+    setLoading(true);
+    try {
+      const updatedUser = await api.post<User>("/auth/roles/switch", { role });
+      setUser(updatedUser);
+      return updatedUser;
     } finally {
       setLoading(false);
     }
@@ -77,11 +137,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         loading,
         isHost: Boolean(user?.is_host),
+        currentRole: user?.role || (user?.is_host ? "host" : "traveller"),
+        roles: user?.roles || (user?.is_host ? ["traveller", "host"] : ["traveller"]),
         demoUsers,
         isLoginModalOpen,
-        openLoginModal: () => setIsLoginModalOpen(true),
+        authModalMode,
+        openLoginModal: () => {
+          setAuthModalMode("login");
+          setIsLoginModalOpen(true);
+        },
+        openSignupModal: () => {
+          setAuthModalMode("signup");
+          setIsLoginModalOpen(true);
+        },
         closeLoginModal: () => setIsLoginModalOpen(false),
+        setAuthModalMode,
         login,
+        signup,
+        demoLogin,
+        becomeHost,
+        switchRole,
         logout,
       }}
     >

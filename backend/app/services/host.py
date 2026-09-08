@@ -22,6 +22,22 @@ from app.schemas.host import (
 )
 
 
+def _load_requested_rows(db: Session, model, ids: List[int], label: str):
+    """Load association rows and reject stale/unknown IDs instead of silently dropping them."""
+    unique_ids = list(dict.fromkeys(ids))
+    if not unique_ids:
+        return []
+    rows = db.query(model).filter(model.id.in_(unique_ids)).all()
+    found_ids = {row.id for row in rows}
+    missing_ids = [row_id for row_id in unique_ids if row_id not in found_ids]
+    if missing_ids:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unknown {label} IDs: {missing_ids}",
+        )
+    return rows
+
+
 def _format_host_listing(lst: Listing) -> HostListingOut:
     cover = lst.photos[0].url if lst.photos else None
     confirmed_bks = [b for b in (lst.bookings or []) if b.status == "confirmed"]
@@ -73,13 +89,13 @@ def create_host_listing(
     )
 
     if payload.amenity_ids:
-        listing.amenities = (
-            db.query(Amenity).filter(Amenity.id.in_(payload.amenity_ids)).all()
+        listing.amenities = _load_requested_rows(
+            db, Amenity, payload.amenity_ids, "amenity"
         )
 
     if payload.category_ids:
-        listing.categories = (
-            db.query(Category).filter(Category.id.in_(payload.category_ids)).all()
+        listing.categories = _load_requested_rows(
+            db, Category, payload.category_ids, "category"
         )
 
     for idx, url in enumerate(payload.photo_urls):
@@ -129,13 +145,13 @@ def update_host_listing(
             setattr(listing, field, update_data[field])
 
     if payload.amenity_ids is not None:
-        listing.amenities = (
-            db.query(Amenity).filter(Amenity.id.in_(payload.amenity_ids)).all()
+        listing.amenities = _load_requested_rows(
+            db, Amenity, payload.amenity_ids, "amenity"
         )
 
     if payload.category_ids is not None:
-        listing.categories = (
-            db.query(Category).filter(Category.id.in_(payload.category_ids)).all()
+        listing.categories = _load_requested_rows(
+            db, Category, payload.category_ids, "category"
         )
 
     if payload.photo_urls is not None:
@@ -239,3 +255,24 @@ def manage_host_blocked_dates(
 
     db.commit()
     return distinct_dates
+
+
+def get_host_blocked_dates(db: Session, host: User, listing_id: int) -> List[date]:
+    """Return only dates explicitly blocked by this host for an owned listing."""
+    listing = db.query(Listing).filter(Listing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Listing not found.")
+    if listing.host_id != host.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to view blocked dates for this listing.",
+        )
+    return [
+        row.date
+        for row in (
+            db.query(BlockedDate)
+            .filter(BlockedDate.listing_id == listing_id)
+            .order_by(BlockedDate.date.asc())
+            .all()
+        )
+    ]
