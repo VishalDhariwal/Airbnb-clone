@@ -9,6 +9,8 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   isHost: boolean;
+  currentRole: string;
+  roles: string[];
   demoUsers: DemoUser[];
   isLoginModalOpen: boolean;
   authModalMode: "login" | "signup";
@@ -19,6 +21,8 @@ interface AuthContextType {
   login: (email: string, password?: string) => Promise<void>;
   signup: (data: { name: string; email: string; password: string }) => Promise<void>;
   demoLogin: (email: string) => Promise<void>;
+  becomeHost: () => Promise<User>;
+  switchRole: (role: "traveller" | "host") => Promise<User>;
   logout: () => void;
 }
 
@@ -36,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Load stored token and fetch current user
     const storedToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (storedToken) {
-      setToken(storedToken);
+      queueMicrotask(() => setToken(storedToken));
       api
         .get<User>("/auth/me")
         .then((u) => setUser(u))
@@ -47,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
         .finally(() => setLoading(false));
     } else {
-      setLoading(false);
+      queueMicrotask(() => setLoading(false));
     }
 
     // Load available demo users for switcher
@@ -103,6 +107,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function becomeHost() {
+    const updatedUser = await api.post<User>("/host/onboard");
+    setUser(updatedUser);
+    return updatedUser;
+  }
+
+  async function switchRole(role: "traveller" | "host") {
+    setLoading(true);
+    try {
+      const updatedUser = await api.post<User>("/auth/roles/switch", { role });
+      setUser(updatedUser);
+      return updatedUser;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function logout() {
     localStorage.removeItem("token");
     setToken(null);
@@ -116,6 +137,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         loading,
         isHost: Boolean(user?.is_host),
+        currentRole: user?.role || (user?.is_host ? "host" : "traveller"),
+        roles: user?.roles || (user?.is_host ? ["traveller", "host"] : ["traveller"]),
         demoUsers,
         isLoginModalOpen,
         authModalMode,
@@ -132,6 +155,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         signup,
         demoLogin,
+        becomeHost,
+        switchRole,
         logout,
       }}
     >

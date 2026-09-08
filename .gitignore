@@ -5,12 +5,17 @@ venv/
 __pycache__/
 *.pyc
 .pytest_cache/
-*.md
 
-# Environment & local files
+# Environment & local secrets (NEVER commit these)
 .env
 .env.local
+backend/.env
+**/.env.local
+**/.env.*.local
 !.env.example
+!backend/.env.example
+
+# Databases
 *.db
 *.sqlite3
 
@@ -24,3 +29,6 @@ dist/
 .DS_Store
 .vscode/
 .idea/
+
+# Docker volumes (local dev)
+pgdata/

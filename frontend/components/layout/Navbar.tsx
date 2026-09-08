@@ -10,6 +10,7 @@ import { AccountMenu } from "./AccountMenu";
 import { SearchBar } from "@/components/search/SearchBar";
 import { MobileSearchOverlay } from "@/components/search/MobileSearchOverlay";
 import { AirbnbLogo, GlobeIcon, MenuIcon, SearchIcon } from "@/components/ui/Icons";
+import { User } from "@/lib/types";
 import {
   springMedium,
   springFast,
@@ -82,6 +83,16 @@ export function Navbar() {
   }, [expanded, isHome, hasActiveSearch, isScrolled, collapse]);
 
   const isOverlay = expanded && (!isHome || isScrolled || hasActiveSearch);
+
+  if (pathname.startsWith("/host")) {
+    return (
+      <HostNavigation
+        user={user}
+        isMenuOpen={isMenuOpen}
+        setIsMenuOpen={setIsMenuOpen}
+      />
+    );
+  }
 
   return (
     <>
@@ -288,5 +299,67 @@ export function Navbar() {
         onClose={() => setIsMobileSearchOpen(false)}
       />
     </>
+  );
+}
+
+function HostNavigation({
+  user,
+  isMenuOpen,
+  setIsMenuOpen,
+}: {
+  user: User | null;
+  isMenuOpen: boolean;
+  setIsMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const [active, setActive] = useState("Today");
+  const links = [
+    ["Today", "/host#today"],
+    ["Calendar", "/host#calendar"],
+    ["Listings", "/host#listings"],
+    ["Messages", "/host#messages"],
+  ];
+
+  useEffect(() => {
+    const syncActiveLink = () => {
+      const match = links.find(([, href]) => href.endsWith(window.location.hash));
+      setActive(match?.[0] || "Today");
+    };
+    queueMicrotask(syncActiveLink);
+    window.addEventListener("hashchange", syncActiveLink);
+    return () => window.removeEventListener("hashchange", syncActiveLink);
+  // The links are static navigation configuration.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <header className="sticky top-0 z-40 border-b border-hairline bg-white">
+      <div className="mx-auto flex h-20 max-w-[2520px] items-center justify-between gap-4 px-5 md:px-10 lg:px-12">
+        <Link href="/host" aria-label="Host dashboard" className="flex shrink-0 items-center gap-1.5 text-rausch">
+          <AirbnbLogo className="h-9 w-9" />
+          <span className="hidden text-[22px] font-bold tracking-[-1.1px] lg:inline">airbnb</span>
+        </Link>
+
+        <nav aria-label="Hosting" className="absolute left-1/2 hidden h-full -translate-x-1/2 items-center gap-12 md:flex">
+          {links.map(([label, href]) => (
+            <a key={label} href={href} className={`flex h-full items-center border-b-2 px-1 text-[16px] font-semibold transition ${active === label ? "border-ink text-ink" : "border-transparent text-[#6a6a6a] hover:text-ink"}`}>
+              {label}
+            </a>
+          ))}
+        </nav>
+
+        <div className="relative ml-auto flex items-center gap-4">
+          <Link href="/" className="mr-2 hidden rounded-full px-3 py-2.5 text-[16px] font-semibold text-ink hover:bg-surface-soft sm:block">
+            Switch to travelling
+          </Link>
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#dff3e4] text-[17px] font-semibold text-[#096c2e]">
+            {user?.name.charAt(0).toUpperCase() || "H"}
+          </span>
+          <button type="button" onClick={() => setIsMenuOpen((open) => !open)} aria-label="Host account menu" className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f2f2f2] text-ink transition hover:bg-[#e8e8e8]">
+            <MenuIcon className="h-5 w-5" />
+          </button>
+          <AccountMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+        </div>
+      </div>
+    </header>
   );
 }

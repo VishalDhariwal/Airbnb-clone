@@ -99,7 +99,9 @@ export default function CreateListingPage() {
         setError(null);
         await api.post<HostListing>("/host/listings", formData);
         showToast("Listing published successfully!", "success");
-        router.push("/host");
+        // The hosting homepage opens on Today. Take the host directly to the
+        // database-backed Listings view so the newly published home is visible.
+        router.push("/host?view=listings#listings");
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Failed to publish listing";
         setError(msg);

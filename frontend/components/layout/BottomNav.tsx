@@ -17,7 +17,7 @@ export function BottomNav() {
   if (
     pathname.startsWith("/book/") ||
     pathname.startsWith("/rooms/") ||
-    pathname === "/host/new"
+    pathname.startsWith("/host")
   ) {
     return null;
   }

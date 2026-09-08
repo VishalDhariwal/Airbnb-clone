@@ -12,8 +12,8 @@ class HostListingCreateRequest(BaseModel):
     city: str
     state: str
     country: str = "India"
-    latitude: float
-    longitude: float
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
     price_per_night: int = Field(..., ge=100)
     cleaning_fee: int = Field(default=0, ge=0)
     max_guests: int = Field(default=2, ge=1)
@@ -34,8 +34,8 @@ class HostListingUpdateRequest(BaseModel):
     city: Optional[str] = None
     state: Optional[str] = None
     country: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
+    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
     price_per_night: Optional[int] = Field(default=None, ge=100)
     cleaning_fee: Optional[int] = Field(default=None, ge=0)
     max_guests: Optional[int] = Field(default=None, ge=1)

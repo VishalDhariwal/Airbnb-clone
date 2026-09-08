@@ -145,11 +145,17 @@ def create_booking(
 
 def cancel_booking(db: Session, user: User, booking_id: int) -> Booking:
     """Cancels a confirmed reservation, releasing the dates immediately."""
-    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    booking = (
+        db.query(Booking)
+        .options(selectinload(Booking.listing))
+        .filter(Booking.id == booking_id)
+        .first()
+    )
     if not booking:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found.")
 
-    if booking.guest_id != user.id and not user.is_host:
+    owns_listing = booking.listing is not None and booking.listing.host_id == user.id
+    if booking.guest_id != user.id and not owns_listing:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You are not authorized to cancel this reservation.",

@@ -2,6 +2,8 @@ import argparse
 import json
 import os
 from pathlib import Path
+from sqlalchemy import text
+from app.config import settings
 from app.database import Base, SessionLocal, engine
 from app.models import Listing
 from app.seed.generator import (
@@ -22,18 +24,54 @@ def load_json(filename: str):
         return json.load(f)
 
 
+def sync_sequences(db: SessionLocal):
+    """Synchronizes PostgreSQL auto-increment serial sequences to max(id)."""
+    if not settings.DATABASE_URL.startswith("postgresql"):
+        return
+
+    serial_tables = [
+        "categories",
+        "amenities",
+        "users",
+        "listings",
+        "listing_photos",
+        "reviews",
+        "bookings",
+        "blocked_dates",
+        "wishlist_items",
+    ]
+    for tbl in serial_tables:
+        try:
+            db.execute(text(f"""
+                SELECT setval(
+                    pg_get_serial_sequence('{tbl}', 'id'),
+                    COALESCE((SELECT MAX(id) FROM "{tbl}"), 1)
+                )
+            """))
+            db.commit()
+        except Exception:
+            db.rollback()
+
+
 def run_seed(reset: bool = False):
-    """Executes database seeding."""
+    """Executes database schema creation and seeding."""
     if reset:
         print("Resetting database schema...")
-        Base.metadata.drop_all(bind=engine)
-        Base.metadata.create_all(bind=engine)
+        if settings.DATABASE_URL.startswith("postgresql"):
+            with engine.connect() as conn:
+                conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
+                conn.commit()
+        else:
+            Base.metadata.drop_all(bind=engine)
+
+    Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
     try:
         # Check if listings already exist
         if db.query(Listing).count() > 0 and not reset:
             print("Database already contains data. Use --reset to drop and rebuild.")
+            sync_sequences(db)
             return
 
         print("Loading seed datasets...")
@@ -63,6 +101,9 @@ def run_seed(reset: bool = False):
 
         print("5/5 Recomputing listing ratings and reviews aggregates...")
         recompute_listing_ratings(db)
+
+        # Synchronize PostgreSQL sequences
+        sync_sequences(db)
 
         # Print summary
         total_listings = db.query(Listing).count()

@@ -3,7 +3,7 @@ from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
-DEFAULT_DB_PATH = BACKEND_DIR / "app.db"
+ENV_PATH = BACKEND_DIR / ".env"
 
 
 class Settings(BaseSettings):
@@ -18,10 +18,10 @@ class Settings(BaseSettings):
         "http://localhost:3001",
         "http://127.0.0.1:3001",
     ]
-    DATABASE_URL: str = f"sqlite:///{DEFAULT_DB_PATH}"
+    DATABASE_URL: str = "postgresql://localhost:5432/airbnb_clone"
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_PATH),
         case_sensitive=True,
         extra="ignore",
     )

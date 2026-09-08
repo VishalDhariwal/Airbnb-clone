@@ -16,6 +16,8 @@ import {
   Home,
   LogOut,
   Sparkles,
+  ArrowRightLeft,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/lib/hooks/useAuth";
 
@@ -32,6 +34,9 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
     demoLogin,
     openLoginModal,
     openSignupModal,
+    currentRole,
+    switchRole,
+    becomeHost,
   } = useAuth();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -44,6 +49,8 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
     if (isOpen) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen, onClose]);
+
+  const isCurrentHost = currentRole === "host" || (user?.is_host && currentRole !== "traveller");
 
   return (
     <AnimatePresence>
@@ -61,31 +68,76 @@ export function AccountMenu({ isOpen, onClose }: AccountMenuProps) {
             /* ================= LOGGED IN STATE ================= */
             <>
               {/* User profile card */}
-              <div className="flex items-center gap-3 px-5 py-3.5 bg-surface-soft/50 border-b border-hairline/60">
-                {user.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt={user.name}
-                    className="h-10 w-10 rounded-full object-cover border border-hairline shrink-0"
-                  />
+              <div className="px-5 py-3.5 bg-surface-soft/50 border-b border-hairline/60">
+                <div className="flex items-center gap-3">
+                  {user.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.name}
+                      className="h-10 w-10 rounded-full object-cover border border-hairline shrink-0"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-rausch text-white flex items-center justify-center font-bold text-sm shrink-0">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-ink truncate">{user.name}</p>
+                    <p className="text-xs text-muted truncate">{user.email}</p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      {isCurrentHost ? (
+                        user.is_superhost ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rausch bg-rausch/10 px-2 py-0.5 rounded-full border border-rausch/20">
+                            <Sparkles className="w-2.5 h-2.5" /> Superhost
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-ink bg-surface-strong px-2 py-0.5 rounded-full border border-hairline">
+                            <ShieldCheck className="w-2.5 h-2.5 text-rausch" /> Active Host
+                          </span>
+                        )
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted bg-surface-soft px-2 py-0.5 rounded-full border border-hairline">
+                          Active Traveller
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Role Switcher if user has both roles */}
+                {user.is_host ? (
+                  <div className="mt-3 pt-2.5 border-t border-hairline/50">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const target = isCurrentHost ? "traveller" : "host";
+                        await switchRole(target);
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl bg-white border border-hairline hover:border-ink/40 text-xs font-medium text-ink shadow-xs transition"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <ArrowRightLeft className="w-3.5 h-3.5 text-rausch" />
+                        <span>Switch to {isCurrentHost ? "Travelling" : "Hosting"}</span>
+                      </span>
+                      <span className="text-[10px] text-muted uppercase tracking-wider font-semibold">
+                        RBAC
+                      </span>
+                    </button>
+                  </div>
                 ) : (
-                  <div className="h-10 w-10 rounded-full bg-rausch text-white flex items-center justify-center font-bold text-sm shrink-0">
-                    {user.name.charAt(0).toUpperCase()}
+                  <div className="mt-3 pt-2.5 border-t border-hairline/50">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await becomeHost();
+                        onClose();
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl bg-rausch/10 hover:bg-rausch/15 text-rausch text-xs font-semibold transition"
+                    >
+                      <span>Become a Host</span>
+                    </button>
                   </div>
                 )}
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-ink truncate">{user.name}</p>
-                  <p className="text-xs text-muted truncate">{user.email}</p>
-                  {user.is_superhost ? (
-                    <span className="inline-block mt-0.5 text-[10px] font-bold text-rausch bg-rausch/10 px-1.5 py-0.2 rounded">
-                      Superhost
-                    </span>
-                  ) : user.is_host ? (
-                    <span className="inline-block mt-0.5 text-[10px] font-semibold text-muted bg-surface-strong px-1.5 py-0.2 rounded">
-                      Host
-                    </span>
-                  ) : null}
-                </div>
               </div>
 
               {/* Navigation Links */}

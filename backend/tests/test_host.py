@@ -97,6 +97,14 @@ def test_host_listing_lifecycle_create_update_delete():
         assert data["is_active"] is True
         created_id = data["id"]
 
+        # Published rows are immediately visible through the public guest APIs.
+        public_detail = client.get(f"/api/listings/{created_id}")
+        assert public_detail.status_code == 200
+        public_search = client.get("/api/listings?sort=newest&limit=100").json()
+        assert created_id in [item["id"] for item in public_search["items"]]
+        home_sections = client.get("/api/listings/home-sections").json()
+        assert created_id in [item["id"] for item in home_sections[0]["items"]]
+
         # 2. Update listing by owner -> 200
         res_update = client.patch(
             f"/api/host/listings/{created_id}",
@@ -124,6 +132,11 @@ def test_host_listing_lifecycle_create_update_delete():
         )
         assert res_block.status_code == 200
         assert blocked_d in res_block.json()
+        res_get_blocks = client.get(
+            f"/api/host/listings/{created_id}/blocked-dates", headers=h1
+        )
+        assert res_get_blocks.status_code == 200
+        assert res_get_blocks.json() == [blocked_d]
 
         # Blocked dates by other host -> 403
         res_block_403 = client.put(
@@ -151,6 +164,33 @@ def test_host_listing_lifecycle_create_update_delete():
                 db.delete(listing)
                 db.commit()
             db.close()
+
+
+def test_guest_can_onboard_as_host_in_postgres():
+    email = "rahul.guest@airbnb.test"
+    token = get_token_for(email)
+    headers = {"Authorization": f"Bearer {token}"}
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == email).first()
+        user.is_host = False
+        db.commit()
+
+        response = client.post("/api/host/onboard", headers=headers)
+        assert response.status_code == 200
+        assert response.json()["is_host"] is True
+
+        db.expire_all()
+        assert db.query(User).filter(User.email == email).first().is_host is True
+        assert client.get("/api/host/listings", headers=headers).status_code == 200
+    finally:
+        user = db.query(User).filter(User.email == email).first()
+        if user:
+            user.is_host = False
+            user.role = "traveller"
+            user.roles = [r for r in user.roles if r.name != "host"]
+            db.commit()
+        db.close()
 
 
 def test_soft_delete_when_bookings_exist():

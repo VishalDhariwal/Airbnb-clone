@@ -11,6 +11,8 @@ export interface User {
   avatar_url?: string | null;
   is_host: boolean;
   is_superhost: boolean;
+  role?: "traveller" | "host" | "admin" | string;
+  roles?: string[];
   bio?: string | null;
   response_rate?: number | null;
   joined_at: string;
@@ -29,6 +31,8 @@ export interface DemoUser {
   avatar_url?: string | null;
   is_host: boolean;
   is_superhost: boolean;
+  role?: "traveller" | "host" | "admin" | string;
+  roles?: string[];
   role_badge: "Superhost" | "Host" | "Guest";
 }
 

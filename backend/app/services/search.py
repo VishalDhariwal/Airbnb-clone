@@ -113,6 +113,8 @@ def search_listings(
         query = query.order_by(Listing.price_per_night.desc())
     elif sort == "rating":
         query = query.order_by(desc(Listing.avg_rating), desc(Listing.review_count))
+    elif sort == "newest":
+        query = query.order_by(desc(Listing.created_at), desc(Listing.id))
     else:  # "recommended" default
         query = query.order_by(
             desc(Listing.is_guest_favorite),

@@ -89,6 +89,7 @@ def get_home_sections(tab: Optional[str] = Query(None), db: Session = Depends(ge
     else:
         # Default & "all" & "homes"
         sections = [
+            ("newly-published", "Newly published homes", None),
             ("north-goa", "Popular homes in North Goa", "Goa"),
             ("dehradun", "Available in Dehradun this weekend", "Dehradun"),
             ("new-delhi", "Stay in New Delhi", "New Delhi"),
@@ -97,7 +98,13 @@ def get_home_sections(tab: Optional[str] = Query(None), db: Session = Depends(ge
 
     results = []
     for sec_id, title, city in sections:
-        items, _ = search_listings(db=db, location=city, page=1, limit=8)
+        items, _ = search_listings(
+            db=db,
+            location=city,
+            sort="newest" if sec_id == "newly-published" else "recommended",
+            page=1,
+            limit=8,
+        )
         results.append(HomeSectionOut(id=sec_id, title=title, items=items))
     return results
 
@@ -239,4 +246,3 @@ def get_listing_quote(
         total_price=pricing["total_price"],
         available=is_avail,
     )
-

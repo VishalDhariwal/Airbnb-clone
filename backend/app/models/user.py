@@ -15,6 +15,7 @@ class User(Base):
     avatar_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     is_host: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_superhost: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    role: Mapped[str] = mapped_column(String(50), default="traveller", nullable=False)
     bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     joined_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False
@@ -25,6 +26,9 @@ class User(Base):
     )
 
     # Relationships
+    roles: Mapped[List["Role"]] = relationship(
+        "Role", secondary="user_roles", back_populates="users", lazy="joined"
+    )
     listings: Mapped[List["Listing"]] = relationship(
         "Listing", back_populates="host", cascade="all, delete-orphan"
     )
@@ -37,3 +41,32 @@ class User(Base):
     wishlist_items: Mapped[List["WishlistItem"]] = relationship(
         "WishlistItem", back_populates="user", cascade="all, delete-orphan"
     )
+
+    @property
+    def role_names(self) -> List[str]:
+        """Returns all distinct role names assigned to this user."""
+        names = {r.name.lower() for r in self.roles} if self.roles else set()
+        if self.is_host:
+            names.add("host")
+        elif "host" in names and not self.is_host:
+            names.remove("host")
+        if not names:
+            names.add("traveller")
+        if "traveller" not in names:
+            names.add("traveller")
+        return sorted(list(names))
+
+    def has_role(self, role_name: str) -> bool:
+        """Checks if user has the specified role."""
+        target = role_name.lower().strip()
+        if target == "traveller":
+            return True  # All users have base traveller access
+        if target == "host":
+            return bool(self.is_host)
+        # For other roles (e.g. admin)
+        if self.role and self.role.lower().strip() == target:
+            return True
+        if self.roles and any(r.name.lower().strip() == target for r in self.roles):
+            return True
+        return False
+

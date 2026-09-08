@@ -2,9 +2,9 @@ from datetime import date
 from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from app.core.deps import get_current_host
+from app.core.deps import get_current_host, get_current_user, require_host
 from app.database import get_db
-from app.models import User
+from app.models import Role, User
 from app.schemas.host import (
     HostBlockedDatesRequest,
     HostDeleteResponse,
@@ -13,16 +13,51 @@ from app.schemas.host import (
     HostListingUpdateRequest,
     HostReservationOut,
 )
+from app.schemas.auth import UserOut
 from app.services.host import (
     create_host_listing,
     delete_host_listing,
     get_host_listings,
+    get_host_blocked_dates,
     get_host_reservations,
     manage_host_blocked_dates,
     update_host_listing,
 )
 
 router = APIRouter(prefix="/host", tags=["Host"])
+
+
+@router.post(
+    "/onboard",
+    response_model=UserOut,
+    summary="Turn the current account into a host account",
+)
+def onboard_as_host(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> UserOut:
+    """Persist host access for an authenticated guest account.
+
+    The operation is intentionally idempotent so the frontend can safely retry it.
+    Becoming a host does not make the user a Superhost.
+    """
+    host_role = db.query(Role).filter(Role.name == "host").first()
+    if not host_role:
+        host_role = Role(
+            name="host",
+            description="Publish and manage property listings, pricing, and reservations",
+        )
+        db.add(host_role)
+        db.flush()
+
+    if host_role not in current_user.roles:
+        current_user.roles.append(host_role)
+
+    current_user.is_host = True
+    current_user.role = "host"
+    db.commit()
+    db.refresh(current_user)
+    return UserOut.model_validate(current_user)
 
 
 @router.get(
@@ -111,3 +146,16 @@ def set_blocked_dates(
 ) -> List[date]:
     """Sets host-blocked calendar dates for this property."""
     return manage_host_blocked_dates(db, current_host, listing_id, payload)
+
+
+@router.get(
+    "/listings/{listing_id}/blocked-dates",
+    response_model=List[date],
+    summary="Get host-blocked dates for a listing",
+)
+def list_blocked_dates(
+    listing_id: int,
+    db: Session = Depends(get_db),
+    current_host: User = Depends(get_current_host),
+) -> List[date]:
+    return get_host_blocked_dates(db, current_host, listing_id)
