@@ -7,17 +7,6 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      push_latest:
-        description: 'Also tag and push as :latest'
-        required: false
-        type: boolean
-        default: true
-      platform:
-        description: 'Target platform for containers'
-        required: false
-        type: string
-        default: 'linux/amd64'
 
 env:
   BACKEND_IMAGE_NAME: airbnb-clone-backend
@@ -51,23 +40,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # ── Option 1: Azure Service Principal (recommended) ──────────────────────
-      - name: Azure CLI Login
-        if: ${{ secrets.AZURE_CREDENTIALS != '' }}
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: ACR Login via Azure CLI
-        if: ${{ secrets.AZURE_CREDENTIALS != '' }}
-        run: |
-          REGISTRY="${{ steps.config.outputs.registry }}"
-          ACR_NAME="${REGISTRY%%.*}"
-          az acr login --name "$ACR_NAME"
-
-      # ── Option 2: Direct ACR Username/Password ───────────────────────────────
+      # ── ACR Login ────────────────────────────────────────────────────────────
       - name: ACR Login via Registry Credentials
-        if: ${{ secrets.AZURE_CREDENTIALS == '' && secrets.ACR_USERNAME != '' }}
         uses: docker/login-action@v3
         with:
           registry: ${{ steps.config.outputs.registry }}
@@ -81,7 +55,7 @@ jobs:
         with:
           images: ${{ steps.config.outputs.backend_image }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.event.inputs.push_latest == 'true' }}
+            type=raw,value=latest
             type=sha,format=short,prefix=
             type=sha,format=long,prefix=sha-
             type=semver,pattern={{version}}
@@ -95,7 +69,7 @@ jobs:
           context: .
           file: ./Dockerfile
           target: backend
-          platforms: ${{ github.event.inputs.platform || 'linux/amd64' }}
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta_backend.outputs.tags }}
           labels: ${{ steps.meta_backend.outputs.labels }}
@@ -109,7 +83,7 @@ jobs:
         with:
           images: ${{ steps.config.outputs.frontend_image }}
           tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.event.inputs.push_latest == 'true' }}
+            type=raw,value=latest
             type=sha,format=short,prefix=
             type=sha,format=long,prefix=sha-
             type=semver,pattern={{version}}
@@ -123,12 +97,12 @@ jobs:
           context: .
           file: ./Dockerfile
           target: frontend
-          platforms: ${{ github.event.inputs.platform || 'linux/amd64' }}
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta_frontend.outputs.tags }}
           labels: ${{ steps.meta_frontend.outputs.labels }}
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://api.yourapp.azurewebsites.net' }}
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL || 'https://airbnb-clone-api-vd.azurewebsites.net' }}
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,scope=frontend,mode=max
 
@@ -173,11 +147,11 @@ jobs:
       - name: Deploy Backend to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ vars.AZURE_BACKEND_APP_NAME }}
+          app-name: ${{ vars.AZURE_BACKEND_APP_NAME || 'airbnb-clone-api-vd' }}
           images: ${{ steps.config.outputs.registry }}/${{ env.BACKEND_IMAGE_NAME }}:latest
 
       - name: Deploy Frontend to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ vars.AZURE_FRONTEND_APP_NAME }}
-          images: ${{ steps.config.outputs.registry }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+          app-name: ${{ vars.AZURE_FRONTEND_APP_NAME || 'airbnb-clone-web-vd' }}
+          images: ${{ steps.config.outputs.registry }}/${{ env.FRONTEND_IMAGE_NAME }}:latest 
