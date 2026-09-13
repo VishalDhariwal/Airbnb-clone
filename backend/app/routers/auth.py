@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Set
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from app.config import settings
 from app.core.deps import get_current_user
 from app.core.security import create_access_token, get_password_hash, verify_password
 from app.database import get_db
@@ -17,6 +18,22 @@ from app.schemas.auth import (
 )
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+# Canonical demo personas permitted for quick-switching in non-production environments
+DEMO_ALLOWED_EMAILS: Set[str] = {
+    "priya.host@airbnb.test",
+    "tarun.host@airbnb.test",
+    "rohit.host@airbnb.test",
+    "ananya.host@airbnb.test",
+    "vikram.host@airbnb.test",
+    "kavita.host@airbnb.test",
+    "arjun.host@airbnb.test",
+    "rahul.guest@airbnb.test",
+    "neha.guest@airbnb.test",
+    "amit.guest@airbnb.test",
+    "ananya.guest@airbnb.test",
+    "rohan.guest@airbnb.test",
+}
 
 
 @router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -73,17 +90,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     email_clean = payload.email.strip().lower()
     user = db.query(User).filter(User.email == email_clean).first()
 
-    valid = False
-    if user and user.hashed_password:
-        valid = verify_password(payload.password, user.hashed_password)
-    elif user and not user.hashed_password:
-        # Graceful migration for existing legacy records
-        if payload.password == "password123":
-            user.hashed_password = get_password_hash("password123")
-            db.commit()
-            valid = True
-
-    if not user or not valid:
+    if not user or not user.hashed_password or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
@@ -100,11 +107,23 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 @router.post("/demo-login", response_model=TokenResponse)
 def demo_login(payload: DemoLoginRequest, db: Session = Depends(get_db)):
     """
-    Provides fast 1-click persona switching for pre-seeded demo accounts.
+    Provides fast 1-click persona switching for pre-seeded demo accounts in development/demo mode.
+    Environment-gated and strictly limited to allowlisted test accounts.
     """
-    email_clean = payload.email.strip().lower()
-    user = db.query(User).filter(User.email == email_clean).first()
+    if not settings.is_demo_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Demo login is disabled in this environment",
+        )
 
+    email_clean = payload.email.strip().lower()
+    if email_clean not in DEMO_ALLOWED_EMAILS:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Demo user not found",
+        )
+
+    user = db.query(User).filter(User.email == email_clean).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -162,8 +181,21 @@ def get_all_roles(db: Session = Depends(get_db)):
 def get_demo_users(db: Session = Depends(get_db)):
     """
     Returns seeded users for the 1-click persona switcher, labelled Superhost, Host, or Guest.
+    Environment-gated and strictly limited to allowlisted test accounts.
     """
-    users = db.query(User).order_by(User.id.asc()).limit(10).all()
+    if not settings.is_demo_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Demo accounts are disabled in this environment",
+        )
+
+    users = (
+        db.query(User)
+        .filter(User.email.in_(DEMO_ALLOWED_EMAILS))
+        .order_by(User.id.asc())
+        .limit(10)
+        .all()
+    )
     results = []
     for u in users:
         badge = "Superhost" if u.is_superhost else ("Host" if u.is_host else "Guest")
@@ -181,3 +213,4 @@ def get_demo_users(db: Session = Depends(get_db)):
             )
         )
     return results
+
